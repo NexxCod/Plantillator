@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de Informes</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="wrap toolbar">
+            <label class="btn" for="fileTpl">Cargar plantilla (.txt)</label>
+            <input id="fileTpl" type="file" accept=".txt,text/plain" />
+            <button id="saveTplBtn" title="Guardar el contenido del cuadro de plantilla con un nombre">Guardar
+                plantilla</button>
+            <button id="clearTplBtn" title="Borra el contenido de la plantilla actual">Borrar plantilla</button>
+            <div class="spacer"></div>
+            <button id="compareBtn">Comparar</button>
+            <button id="copyBtn">Copiar salida</button>
+            <button id="clearReportBtn" title="Limpia el informe del residente y la salida">Limpiar</button>
+        </div>
+
+    </header>
+
+    <main>
+        <!-- Panel de plantillas -->
+        <section class="card">
+            <h2>Plantillas guardadas</h2>
+            <div id="tplList" class="list" aria-live="polite"></div>
+            <p class="small">Las plantillas se guardan localmente en tu navegador usando <code>localStorage</code> y
+                permanecerán disponibles al volver a abrir.</p>
+        </section>
+
+        <!-- Panel principal -->
+        <section class="card">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                    <h2>PLANTILLA (formato base)</h2>
+                    <textarea id="templateTxt" placeholder="Pega aquí la PLANTILLA base…"></textarea>
+                </div>
+                <div>
+                    <h2>INFORME DEL RESIDENTE</h2>
+                    
+                    <textarea id="reportTxt" placeholder="Pega aquí el INFORME del residente…"></textarea>
+                    <div>
+    <button id="micReportBtn" class="mic-btn" title="Dictar al informe (Web Speech)">
+      🎤 
+      <span class="mic-dot" style="display:none;"></span>
+    </button>
+    <span class="mic-hint">Di: “punto”, “coma”, “nuevo párrafo”, “abrir/cerrar comillas”…</span>
+  </div>
+                </div>
+            </div>
+
+            <h2 style="margin-top:14px;">SALIDA (frases distintas EN MAYÚSCULAS)</h2>
+            <textarea id="outputTxt" class="output" readonly placeholder="Aquí aparecerá la salida…"></textarea>
+
+            <div id="metrics" class="metrics">
+                <button id="editOutBtn" title="Editar la salida con control de cambios">Editar salida</button>
+
+                <span class="pill">Frases en informe: <b id="mTotal">0</b></span>
+                <span class="pill warn">Frases con cambios: <b id="mChanged">0</b></span>
+                <span class="pill good">% cambio (frases): <b id="mPct">0%</b></span>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Editor -->
+<div id="editorModal" class="modal" aria-hidden="true">
+  <div class="modal-backdrop" data-close="1"></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+    <header class="modal-head">
+      <h2 id="edTitle">Editor de salida (control de cambios)</h2>
+      <button class="icon-btn" id="edClose" title="Cerrar">✕</button>
+      
+    </header>
+
+    <div class="modal-toolbar">
+        <button id="edMicBtn" class="mic-btn" title="Dictar en el editor (Web Speech)">
+  🎤 Dictar
+  <span class="mic-dot" style="display:none;"></span>
+</button>
+      <button id="edUseBase" title="Limpiar resaltados">Limpiar resaltados</button>
+      <label title="Conservar líneas que terminen en ':' al normalizar">
+        <input type="checkbox" id="edKeepHeads" checked> Mantener encabezados (líneas con “:”)
+      </label>
+      <div class="spacer"></div>
+      <button id="edNormalize" title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas">Normalizar</button>
+      <button id="edCopy" title="Copiar texto plano del editor">Copiar</button>
+      <button id="edSaveBack" class="primary" title="Restaurar la salida a su estado original">Restaurar original</button>
+    </div>
+
+    <div id="edEditor" class="editor" contenteditable="true" spellcheck="false" aria-label="Editor con control de cambios"></div>
+    
+
+  </div>
+</div>
+
+    <footer>
+         © 2025 Marcelo Salinas Villagra · Versión 1.0
+    </footer>
+    <div id="toast" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="./js/app.js"></script>
+</body>
+
+</html>
