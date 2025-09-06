@@ -162,6 +162,18 @@ document.getElementById("editOutBtn")?.addEventListener("click", ()=>{
 
   const dot = btn.querySelector(".mic-dot");
 
+  const correctionMap = [
+  ["birads", "BI-RADS"],
+  ["lirads", "LI-RADS"], ["li rads", "LI-RADS"],
+  ["hipo denso", "hipodenso"], ["hiper denso", "hiperdenso"],
+  ["hipo intenso", "hipointenso"], ["hiper intenso", "hiperintenso"],
+  ["hounsfield", "Hounsfield"], ["hu", "HU"],
+  ["colédoco", "colédoco"], ["coledoco", "colédoco"],
+  ["milimetros", "mm"], ["milímetros", "mm"], ["centimetros", "cm"], ["centímetros","cm"],
+  ["t 1", "T1"], ["t 2", "T2"], ["dwi", "DWI"], ["adc", "ADC"],
+  ["suv", "SUV"], ["vc i", "VCI"], ["vb i", "VBI"]
+];
+
   const speech = createSpeechController({
     lang: "es-CL",
     onStart: () => {
@@ -179,6 +191,7 @@ document.getElementById("editOutBtn")?.addEventListener("click", ()=>{
     onError: (e) => {
       showToast("Dictado: " + (e?.error || "error"));
     },
+    correctionMap,
     onPartial: (txt) => {
       // No insertamos interinos en el textarea para no “ensuciar” el undo.
       // (Si quieres previsualizar interinos, podrías mostrarlos en un badge flotante)
