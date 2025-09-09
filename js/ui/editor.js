@@ -152,24 +152,21 @@ function toInformeCase(text, keepHeadings, acronyms) {
         /(^|[.!?…]\s+)(\p{L})/gu,
         (m, p, chr) => p + chr.toUpperCase()
       );
+
+      // La lógica principal ahora se basa en el Set de acrónimos que le pasamos
       if (acronyms && acronyms.size) {
-        s = s.replace(/\b([\p{L}ÁÉÍÓÚÜÑ]{2,})\b/gu, (m, word) => {
-          const up = word
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toUpperCase();
+        // La regex busca palabras completas para reemplazarlas
+        s = s.replace(/\b([\p{L}\p{N}-]+)\b/gu, (m, word) => {
+          const up = word.toUpperCase();
+          // Si la palabra en mayúsculas está en nuestro Set, la devolvemos en mayúsculas
           return acronyms.has(up) ? up : m;
         });
       }
-      s = s.replace(/\b(mm|cm|ml|kg|mg|μm)\b/gi, (t) => t.toLowerCase());
-      s = s.replace(
-        /\b(UH|VCI|VBI|VMS|TC|RM|TAC|T2|T1|FOV|CTA|MRA|MIP|DWI|ADC)\b/gi,
-        (t) => t.toUpperCase()
-      );
       return s;
     })
     .join("\n");
 }
+
 function boldUppercaseSentences(plainText) {
   const segs = (plainText || "").split(/(\n{2,})/);
   const out = segs
@@ -199,6 +196,7 @@ export function buildEditor({
   edClose,
   edKeepHeads,
   outputTxt,
+  AppConfig
 }) {
   let edBaseText = "";
   let edBaseAcronyms = new Set();
@@ -219,30 +217,45 @@ export function buildEditor({
     const ops = diffTokens(A, B);
 
     let html = "";
-    for (const op of ops) {
-      // Acceso por propiedades (más robusto con analizadores)
-      const tag = op.tag;
-      const j0 = op.j0;
-      const j1 = op.j1;
+    for (let i = 0; i < ops.length; i++) {
+        const op = ops[i];
 
-      if (tag === "equal") {
-        const seg = B.slice(j0, j1).join("");
-        html += esc(seg);
-      } else if (tag === "insert") {
-        const seg = B.slice(j0, j1).join("");
-        // Si la inserción es solo whitespace (espacios/saltos), no la marques
-        if (/^\s+$/.test(seg)) {
-          html += esc(seg);
-        } else {
-          html += `<mark class="add">${esc(seg)}</mark>`;
+        if (op.tag === "equal") {
+            const seg = B.slice(op.j0, op.j1).join('');
+            html += esc(seg);
+            continue; // Pasa a la siguiente operación
         }
-      }
-      // delete: se omite en la vista
+
+        if (op.tag === "insert") {
+            // Hemos encontrado una inserción.
+            // Acumulamos su contenido y miramos si las siguientes operaciones también son inserciones.
+            let content = B.slice(op.j0, op.j1).join('');
+            let lookahead = i + 1;
+
+            while (lookahead < ops.length && ops[lookahead].tag === 'insert') {
+                const nextOp = ops[lookahead];
+                content += B.slice(nextOp.j0, nextOp.j1).join('');
+                lookahead++;
+            }
+
+            // Si el contenido agrupado no es solo espacio en blanco, lo envolvemos en <mark>
+            if (content.trim().length > 0) {
+                html += `<mark class="add">${esc(content)}</mark>`;
+            } else {
+                // Si solo era espacio, lo añadimos sin resaltar
+                html += esc(content);
+            }
+
+            // Saltamos el índice del bucle principal hasta la última inserción que agrupamos
+            i = lookahead - 1;
+        }
+        // Las operaciones 'delete' se ignoran en la salida visual, así que no se necesita un 'else'.
     }
+
     edEditor.innerHTML = html || "";
     setCaretOffset(edEditor, caret);
     edSession.html = edEditor.innerHTML;
-  }
+}
 
   function openEditorWith(textFromOutput) {
     editorModal.setAttribute("aria-hidden", "false");
@@ -266,8 +279,10 @@ export function buildEditor({
     edEditor.focus();
   }
   function closeEditor() {
+    document.getElementById('editOutBtn')?.focus();
     editorModal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
+    
   }
 
   // =================== Eventos ===================
@@ -281,13 +296,21 @@ export function buildEditor({
   if (edEditor) {
     // Interceptar Enter para insertar \n plano (sin <div>/<br>) y re-renderizar
     edEditor.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+    // Si es Enter (sin Shift), inserta un salto de párrafo
+    if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        insertPlainNewline();
+        insertPlainTextAtSelection("\n\n"); // Salto doble
         if (edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
         edEditor._renderTimer = requestAnimationFrame(renderEditorDiff);
-      }
-    });
+    } 
+    // Si es Shift + Enter, inserta un salto de línea simple
+    else if (e.key === "Enter" && e.shiftKey) {
+        e.preventDefault();
+        insertPlainTextAtSelection("\n"); // Salto simple
+        if (edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
+        edEditor._renderTimer = requestAnimationFrame(renderEditorDiff);
+    }
+});
 
     edEditor.addEventListener("beforeinput", (e) => {
       lastInputType = e.inputType || "";
@@ -321,7 +344,7 @@ export function buildEditor({
     edNormalize.addEventListener("click", () => {
       const keep = edKeepHeads?.checked ?? true;
       const plain = edEditor.innerText;
-      const norm = toInformeCase(plain, keep, edBaseAcronyms);
+      const norm = toInformeCase(plain, keep, AppConfig.excludedWords);
       edEditor.textContent = norm; // limpio
       renderEditorDiff(); // recalcula diffs vs base
       showToast("Texto normalizado");

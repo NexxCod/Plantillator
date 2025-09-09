@@ -31,14 +31,38 @@ export function saveLastState(templateTxt, reportTxt) {
   } catch (e) { /* noop */ }
 }
 
-export function restoreLastState(templateTxt, reportTxt) {
+export function getLastState() {
   try {
     const raw = localStorage.getItem(LAST_STATE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function restoreOnLoad(templateTxt, reportTxt) {
+  try {
+    const data = getLastState();
     if (data && typeof data === "object") {
-      if (typeof data.template === "string") templateTxt.value = data.template;
-      if (typeof data.report === "string") reportTxt.value = data.report;
+      if (typeof data.template === "string") {
+        templateTxt.value = data.template;
+      }
+      // Ya no restauramos el informe automáticamente
+      if (reportTxt) {
+          reportTxt.value = ""; // Asegura que el campo de informe esté vacío al cargar
+      }
     }
   } catch (e) { /* noop */ }
 }
+
+// export function restoreLastState(templateTxt, reportTxt) {
+//   try {
+//     const raw = localStorage.getItem(LAST_STATE_KEY);
+//     if (!raw) return;
+//     const data = JSON.parse(raw);
+//     if (data && typeof data === "object") {
+//       if (typeof data.template === "string") templateTxt.value = data.template;
+//       if (typeof data.report === "string") reportTxt.value = data.report;
+//     }
+//   } catch (e) { /* noop */ }
+// }

@@ -264,7 +264,15 @@ footer {
   line-height:1.4;
 }
 .editor strong{ font-weight:700; }
-.editor mark.add{ background:rgba(34,197,94,.25); border-radius:4px; padding:0 2px; }
+
+/* --- MODIFICADO: Estilo de resaltado mejorado --- */
+.editor mark.add{ 
+  background: rgba(34, 211, 238, 0.3); /* Usa el color --accent (cyan) con opacidad */
+  color: inherit; /* Mantiene el color del texto normal */
+  text-decoration: none; /* Quita cualquier subrayado por defecto del <mark> */
+  box-decoration-break: clone; /* Asegura que el fondo se dibuje correctamente en saltos de línea */
+  /* Se eliminaron 'border-radius' y 'padding' para lograr el efecto de línea continua */
+}
 .editor del.del{ color:#94a3b8; text-decoration:line-through; }
 
 /* --- Mic button / state --- */

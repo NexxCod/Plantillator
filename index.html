@@ -11,21 +11,20 @@
 <body>
     <header>
         <div class="wrap toolbar">
-            <label class="btn" for="fileTpl">Cargar plantilla (.txt)</label>
+            <label class="btn" for="fileTpl">📄 Cargar plantilla</label>
             <input id="fileTpl" type="file" accept=".txt,text/plain" />
-            <button id="saveTplBtn" title="Guardar el contenido del cuadro de plantilla con un nombre">Guardar
+            <button id="saveTplBtn" title="Guardar el contenido del cuadro de plantilla con un nombre">💾 Guardar
                 plantilla</button>
-            <button id="clearTplBtn" title="Borra el contenido de la plantilla actual">Borrar plantilla</button>
+            <button id="clearTplBtn" title="Borra el contenido de la plantilla actual">🧹 Limpiar plantilla</button>
             <div class="spacer"></div>
+            <button id="settingsBtn" title="Configurar palabras excluidas">⚙️</button>
             <button id="compareBtn">Comparar</button>
-            <button id="copyBtn">Copiar salida</button>
-            <button id="clearReportBtn" title="Limpia el informe del residente y la salida">Limpiar</button>
+            <button id="copyBtn" title="Copiar salida">📋</button>
+            <button id="clearReportBtn" title="Limpia el informe del residente y la salida">🧹 Limpiar informe</button>
         </div>
-
     </header>
 
     <main>
-        <!-- Panel de plantillas -->
         <section class="card">
             <h2>Plantillas guardadas</h2>
             <div id="tplList" class="list" aria-live="polite"></div>
@@ -33,7 +32,6 @@
                 permanecerán disponibles al volver a abrir.</p>
         </section>
 
-        <!-- Panel principal -->
         <section class="card">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <div>
@@ -41,16 +39,18 @@
                     <textarea id="templateTxt" placeholder="Pega aquí la PLANTILLA base…"></textarea>
                 </div>
                 <div>
-                    <h2>INFORME DEL RESIDENTE</h2>
-                    
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <h2>INFORME DEL RESIDENTE</h2>
+                        <button id="recoverReportBtn" class="btn-icon" title="Recuperar último informe guardado">↺</button>
+                    </div>
                     <textarea id="reportTxt" placeholder="Pega aquí el INFORME del residente…"></textarea>
                     <div>
-    <button id="micReportBtn" class="mic-btn" title="Dictar al informe (Web Speech)">
-      🎤 
-      <span class="mic-dot" style="display:none;"></span>
-    </button>
-    <span class="mic-hint">Di: “punto”, “coma”, “nuevo párrafo”, “abrir/cerrar comillas”…</span>
-  </div>
+                        <button id="micReportBtn" class="mic-btn" title="Dictar al informe (Web Speech). Atajo: Mantén presionado 'Alt'">
+                            🎤 
+                            <span class="mic-dot" style="display:none;"></span>
+                        </button>
+                        <span class="mic-hint">Atajo: Mantén presionada la tecla <b>Alt</b> para hablar.</span>
+                    </div>
                 </div>
             </div>
 
@@ -59,7 +59,6 @@
 
             <div id="metrics" class="metrics">
                 <button id="editOutBtn" title="Editar la salida con control de cambios">Editar salida</button>
-
                 <span class="pill">Frases en informe: <b id="mTotal">0</b></span>
                 <span class="pill warn">Frases con cambios: <b id="mChanged">0</b></span>
                 <span class="pill good">% cambio (frases): <b id="mPct">0%</b></span>
@@ -67,39 +66,60 @@
         </section>
     </main>
 
-    <!-- Modal Editor -->
-<div id="editorModal" class="modal" aria-hidden="true">
-  <div class="modal-backdrop" data-close="1"></div>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edTitle">
-    <header class="modal-head">
-      <h2 id="edTitle">Editor de salida (control de cambios)</h2>
-      <button class="icon-btn" id="edClose" title="Cerrar">✕</button>
-      
-    </header>
+    <div id="editorModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close="1"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+            <header class="modal-head">
+                <h2 id="edTitle">Editor de salida (control de cambios)</h2>
+                <button class="icon-btn" id="edClose" title="Cerrar">✕</button>
+            </header>
 
-    <div class="modal-toolbar">
-        <button id="edMicBtn" class="mic-btn" title="Dictar en el editor (Web Speech)">
-  🎤 Dictar
-  <span class="mic-dot" style="display:none;"></span>
-</button>
-      <button id="edUseBase" title="Limpiar resaltados">Limpiar resaltados</button>
-      <label title="Conservar líneas que terminen en ':' al normalizar">
-        <input type="checkbox" id="edKeepHeads" checked> Mantener encabezados (líneas con “:”)
-      </label>
-      <div class="spacer"></div>
-      <button id="edNormalize" title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas">Normalizar</button>
-      <button id="edCopy" title="Copiar texto plano del editor">Copiar</button>
-      <button id="edSaveBack" class="primary" title="Restaurar la salida a su estado original">Restaurar original</button>
+            <div class="modal-toolbar">
+                <button id="edMicBtn" class="mic-btn" title="Dictar en el editor (Web Speech). Atajo: Mantén presionado 'Alt'">
+                    🎤
+                    <span class="mic-dot" style="display:none;"></span>
+                </button>
+                <button id="edUseBase" title="Fija el texto actual como la versión 'original' para la comparación visual">Limpiar resaltados</button>
+                <label title="Conservar líneas que terminen en ':' al normalizar">
+                    <input type="checkbox" id="edKeepHeads" checked> Mantener encabezados (líneas con “:”)
+                </label>
+                <div class="spacer"></div>
+                <button id="edNormalize" title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas">Normalizar</button>
+                <button id="edCopy" title="Copiar texto plano del editor">📋</button>
+                <button id="edSaveBack" class="primary" title="Restaura el texto a cómo estaba cuando se abrió el editor">Restaurar original</button>
+            </div>
+
+            <div id="edEditor" class="editor" contenteditable="true" spellcheck="false"
+                aria-label="Editor con control de cambios"></div>
+        </div>
+    </div>
+    
+    <div id="settingsModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close="1"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" style="max-width: 600px;">
+            <header class="modal-head">
+                <h2 id="settingsTitle">Configuración</h2>
+                <button class="icon-btn" id="settingsClose" title="Cerrar">✕</button>
+            </header>
+            <div style="padding: 12px 16px; display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
+                <h3>Palabras excluidas de la comparación</h3>
+                <p class="small" style="margin: -8px 0 0 0;">
+                    Lista de siglas o palabras (una por línea) que se ignorarán al comparar. Útil para términos como "LIRADS", "IV", etc. La comparación es insensible a mayúsculas.
+                </p>
+                <textarea id="excludedWordsTxt" style="min-height: 200px; flex:1;"></textarea>
+                <div class="modal-toolbar" style="padding:0; border:none;">
+                <label class="btn" for="settingsLoadFile">Cargar archivo</label>
+                <input id="settingsLoadFile" type="file" accept=".txt,text/plain,.json,application/json" />
+                <button id="settingsDownloadBtn">Descargar</button>
+                <div class="spacer"></div>
+                <button id="settingsSave" class="primary">Guardar cambios</button>
+            </div>
+            </div>
+        </div>
     </div>
 
-    <div id="edEditor" class="editor" contenteditable="true" spellcheck="false" aria-label="Editor con control de cambios"></div>
-    
-
-  </div>
-</div>
-
     <footer>
-         © 2025 Marcelo Salinas Villagra · Versión 1.0
+         © 2025 Marcelo Salinas Villagra · Versión 1.1
     </footer>
     <div id="toast" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="./js/app.js"></script>

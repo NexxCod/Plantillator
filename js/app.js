@@ -1,5 +1,6 @@
-import { loadTemplates, saveTemplates, saveLastState, restoreLastState } from "./core/storage.js";
+import { loadTemplates, saveTemplates, saveLastState, restoreOnLoad, getLastState  } from "./core/storage.js";
 import { diffTemplateVsReportByParagraphs } from "./core/diff.js";
+import { loadSettings, saveSettings } from "./core/config.js";
 import { el } from "./ui/dom.js";
 import { showToast } from "./ui/toast.js";
 import { renderTemplateList } from "./ui/templates.js";
@@ -20,6 +21,7 @@ const copyBtn     = el("#copyBtn");
 
 // Estado
 let templates = loadTemplates();
+let AppConfig = loadSettings();
 
 // Helpers UI
 function refreshCopyState() {
@@ -134,6 +136,17 @@ el("#clearReportBtn")?.addEventListener("click", () => {
   showToast("Informe y salida limpiados");
 });
 
+el("#recoverReportBtn")?.addEventListener("click", () => {
+    const lastState = getLastState();
+    if (lastState?.report) {
+        reportTxt.value = lastState.report;
+        saveLastState(templateTxt, reportTxt); // Actualiza el estado por si acaso
+        showToast("Último informe recuperado");
+    } else {
+        showToast("No se encontró un informe para recuperar");
+    }
+});
+
 // Editor modal
 const editorModal = document.getElementById("editorModal");
 const edEditor    = document.getElementById("edEditor");
@@ -145,7 +158,7 @@ const edClose     = document.getElementById("edClose");
 const edKeepHeads = document.getElementById("edKeepHeads");
 
 const { openEditorWith } = buildEditor({
-  editorModal, edEditor, edUseBase, edNormalize, edCopy, edSaveBack, edClose, edKeepHeads, outputTxt
+  editorModal, edEditor, edUseBase, edNormalize, edCopy, edSaveBack, edClose, edKeepHeads, outputTxt, AppConfig
 });
 
 document.getElementById("editOutBtn")?.addEventListener("click", ()=>{
@@ -288,6 +301,96 @@ function setBtnState(btn, dot, active) {
   if (dot) dot.style.display = active ? "inline-block" : "none";
 }
 
+(function initSettingsModal() {
+    const modal = el("#settingsModal");
+    const openBtn = el("#settingsBtn");
+    const closeBtn = el("#settingsClose");
+    const saveBtn = el("#settingsSave");
+    const downloadBtn = el("#settingsDownloadBtn");
+    const loadFileBtn = el("#settingsLoadFile");
+    const wordsTxt = el("#excludedWordsTxt");
+    if (!modal) return;
+
+    const openModal = () => {
+        // Carga las palabras actuales en el textarea
+        wordsTxt.value = [...AppConfig.excludedWords].join("\n");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+    };
+
+    const closeModal = () => {
+      
+        document.getElementById('settingsBtn')?.focus();
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+    };
+
+    openBtn?.addEventListener("click", openModal);
+    closeBtn?.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+        if (e.target.dataset.close) closeModal();
+    });
+
+    saveBtn?.addEventListener("click", () => {
+        const words = wordsTxt.value.split("\n")
+            .map(w => w.toUpperCase().trim())
+            .filter(Boolean);
+        AppConfig.excludedWords = new Set(words);
+        
+        // console.log('✅ Configuración guardada en memoria:', AppConfig.excludedWords);
+
+        saveSettings(AppConfig, showToast);
+        showToast("Configuración guardada");
+        closeModal();
+    });
+
+    downloadBtn?.addEventListener("click", () => {
+        const dataStr = JSON.stringify({ excludedWords: [...AppConfig.excludedWords] }, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "comparador-settings.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    loadFileBtn?.addEventListener("change", async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            let words = [];
+            
+            // Lógica para decidir el formato
+            if (file.name.toLowerCase().endsWith(".json")) {
+                // Si es JSON, intenta parsearlo
+                const data = JSON.parse(text);
+                if (data && Array.isArray(data.excludedWords)) {
+                    words = data.excludedWords;
+                    showToast(`Configuración cargada desde ${file.name}`);
+                } else {
+                    throw new Error("El archivo JSON no tiene el formato esperado.");
+                }
+            } else {
+                // Si no es JSON, trátalo como TXT
+                words = text.split(/[\n,;]+/).map(w => w.trim()).filter(Boolean);
+                showToast(`${words.length} palabras cargadas desde ${file.name}`);
+            }
+            
+            // Actualiza el textarea con las palabras cargadas
+            wordsTxt.value = words.join("\n");
+
+        } catch (err) {
+            showToast("Error al leer el archivo: " + err.message);
+        }
+        e.target.value = ""; // Resetea el input para poder cargar el mismo archivo de nuevo
+    });
+})();
+
 // ¿Dónde dictamos? Si el editor está visible, priorízalo; si no, al informe.
 function pickActiveTarget(){
   const editorOpen = editorModal?.getAttribute("aria-hidden") === "false";
@@ -323,18 +426,20 @@ function stopDictation(){
 }
 
 /* ---------- 1) Ctrl = Push-to-talk (mantén presionado) ---------- */
-let ctrlHeld = false;
+let altHeld = false;
 document.addEventListener("keydown", (e) => {
   if (e.repeat) return;
-  // Solo Ctrl sin combinaciones
-  if (e.key === "Control" && !ctrlHeld) {
-    ctrlHeld = true;
+  // Solo Alt sin combinaciones
+  if (e.key === "Alt" && !altHeld) {
+    e.preventDefault(); // Evita que el foco se vaya al menú del navegador
+    altHeld = true;
     startDictation();
   }
 });
 document.addEventListener("keyup", (e) => {
-  if (e.key === "Control" && ctrlHeld) {
-    ctrlHeld = false;
+  if (e.key === "Alt" && altHeld) {
+    e.preventDefault();
+    altHeld = false;
     stopDictation();
   }
 });
@@ -343,6 +448,6 @@ document.addEventListener("keyup", (e) => {
 
 
 // Init
-restoreLastState(templateTxt, reportTxt);
+restoreOnLoad(templateTxt, reportTxt);
 doRenderTemplateList();
 refreshCopyState();

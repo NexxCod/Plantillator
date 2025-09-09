@@ -5,7 +5,8 @@ import { simScore } from "./similarity.js";
 
 // LCS por oraciones con igualdad aproximada
 export function diffSentences(aArr, bArr) {
-  const n = aArr.length, m = bArr.length;
+  const n = aArr.length,
+    m = bArr.length;
   const dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
   for (let i = 1; i <= n; i++) {
     for (let j = 1; j <= m; j++) {
@@ -15,11 +16,13 @@ export function diffSentences(aArr, bArr) {
     }
   }
   const ops = [];
-  let i = n, j = m;
+  let i = n,
+    j = m;
   while (i > 0 || j > 0) {
-     if (i > 0 && j > 0 && approxEqual(aArr[i - 1], bArr[j - 1])) {
+    if (i > 0 && j > 0 && approxEqual(aArr[i - 1], bArr[j - 1])) {
       ops.push({ tag: "equal", a: [i - 1, i], b: [j - 1, j] });
-      i--; j--;
+      i--;
+      j--;
     } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
       ops.push({ tag: "insert", a: [i, i], b: [j - 1, j] });
       j--;
@@ -29,18 +32,23 @@ export function diffSentences(aArr, bArr) {
     }
   }
   ops.reverse();
-  // Compacta
   const merged = [];
   for (const op of ops) {
     const last = merged[merged.length - 1];
-    if (last && last.tag === op.tag && last.a[1] === op.a[0] && last.b[1] === op.b[0]) {
-      last.a[1] = op.a[1]; last.b[1] = op.b[1];
+    if (
+      last &&
+      last.tag === op.tag &&
+      last.a[1] === op.a[0] &&
+      last.b[1] === op.b[0]
+    ) {
+      last.a[1] = op.a[1];
+      last.b[1] = op.b[1];
     } else merged.push({ ...op });
   }
-  // Replaces
   const finalOps = [];
   for (let k = 0; k < merged.length; k++) {
-    const cur = merged[k], next = merged[k + 1];
+    const cur = merged[k],
+      next = merged[k + 1];
     if (cur && next && cur.tag === "delete" && next.tag === "insert") {
       finalOps.push({ tag: "replace", a: cur.a, b: next.b });
       k++;
@@ -53,10 +61,8 @@ export function compareBySentences(templatePar, reportPar) {
   const a = splitSentences(templatePar);
   const b = splitSentences(reportPar);
   const ops = diffSentences(a, b);
-
   let out = "";
   let reportSentences = 0, templateSentences = 0, changedSentences = 0;
-
   for (const op of ops) {
     const [ai0, ai1] = op.a;
     const [bj0, bj1] = op.b;
@@ -64,7 +70,6 @@ export function compareBySentences(templatePar, reportPar) {
     const bCount = bj1 - bj0;
     templateSentences += aCount;
     reportSentences += bCount;
-
     if (op.tag === "equal") {
       out += b.slice(bj0, bj1).join("");
     } else if (op.tag === "insert" || op.tag === "replace") {
@@ -75,7 +80,6 @@ export function compareBySentences(templatePar, reportPar) {
       changedSentences += aCount;
     }
   }
-
   const denom = Math.max(reportSentences, templateSentences) || 1;
   return {
     text: out,
@@ -105,17 +109,13 @@ export function bestMatchIndex(tpars, rpar, startIdx, win = 8) {
 export function diffTemplateVsReportByParagraphs(templateText, reportText) {
   const tpars = splitParagraphs(templateText);
   const rpars = splitParagraphs(reportText);
-
   const out = [];
   let cursor = 0;
   let totalReportSent = 0, totalTemplateSent = 0, totalChangedSent = 0, totalDenom = 0;
-
   for (let k = 0; k < rpars.length; k++) {
     const r = rpars[k];
     if (!r.trim()) { out.push(r); continue; }
-
     let t = cursor < tpars.length ? tpars[cursor] : "";
-
     if (t && approxEqual(normalizeFlat(t), normalizeFlat(r))) {
       const res = compareBySentences(t, r);
       out.push(res.text);
@@ -126,7 +126,6 @@ export function diffTemplateVsReportByParagraphs(templateText, reportText) {
       cursor++;
       continue;
     }
-
     let idx = -1;
     if (tpars.length) {
       idx = bestMatchIndex(tpars, r, cursor, 8);
@@ -135,21 +134,17 @@ export function diffTemplateVsReportByParagraphs(templateText, reportText) {
     } else {
       t = "";
     }
-
     const res = compareBySentences(t, r);
     out.push(res.text);
     totalReportSent += res.stats.reportSentences;
     totalTemplateSent += res.stats.templateSentences;
     totalChangedSent += res.stats.changedSentences;
     totalDenom += res.stats.denom;
-
     if (idx >= 0) cursor = Math.max(cursor, idx + 1);
   }
-
   const pct = totalDenom
     ? Math.round((totalChangedSent / totalDenom) * 10000) / 100
     : 0;
-
   return {
     text: out.join("\n\n"),
     metrics: {
