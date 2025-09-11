@@ -207,6 +207,33 @@ footer {
 
 .output { min-height: 260px; }
 
+div.output {
+    background: #0b1023;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    line-height: 1.4;
+    white-space: pre-wrap; /* Respeta los saltos de línea */
+    word-wrap: break-word; /* Evita que el texto se desborde */
+    overflow-y: auto;     /* Añade scroll si el contenido es largo */
+    cursor: text;
+}
+
+/* Estilo para el placeholder del div */
+div.output:empty:before {
+    content: attr(placeholder);
+    color: var(--muted);
+    pointer-events: none;
+}
+
+/* --- NUEVO: Resaltado ámbar para las mayúsculas originales en la SALIDA --- */
+.output .original-upper {
+    color: var(--warn); /* color ámbar */
+    font-weight: bold;
+}
+
 /* --- Toast --- */
 #toast {
   position: fixed;
@@ -265,13 +292,23 @@ footer {
 }
 .editor strong{ font-weight:700; }
 
+.editor .original-upper {
+    background: rgba(245, 158, 11, 0.25); /* Color --warn (amber) con opacidad */
+    color: var(--warn);
+    padding: 1px 3px;
+    border-radius: 4px;
+    font-weight: 600;
+    box-decoration-break: clone;
+}
+
+
 /* --- MODIFICADO: Estilo de resaltado mejorado --- */
 .editor mark.add{ 
   background: rgba(34, 211, 238, 0.3); /* Usa el color --accent (cyan) con opacidad */
   color: inherit; /* Mantiene el color del texto normal */
   text-decoration: none; /* Quita cualquier subrayado por defecto del <mark> */
   box-decoration-break: clone; /* Asegura que el fondo se dibuje correctamente en saltos de línea */
-  /* Se eliminaron 'border-radius' y 'padding' para lograr el efecto de línea continua */
+
 }
 .editor del.del{ color:#94a3b8; text-decoration:line-through; }
 

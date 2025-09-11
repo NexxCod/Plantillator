@@ -74,7 +74,7 @@ export function compareBySentences(templatePar, reportPar) {
       out += b.slice(bj0, bj1).join("");
     } else if (op.tag === "insert" || op.tag === "replace") {
       const seg = b.slice(bj0, bj1).join("");
-      out += seg.toUpperCase();
+      out += `<strong class="original-upper">${seg.toUpperCase()}</strong>`;
       changedSentences += bCount;
     } else if (op.tag === "delete") {
       changedSentences += aCount;

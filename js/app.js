@@ -1,23 +1,33 @@
-import { loadTemplates, saveTemplates, saveLastState, restoreOnLoad, getLastState  } from "./core/storage.js";
+import {
+  loadTemplates,
+  saveTemplates,
+  saveLastState,
+  restoreOnLoad,
+  getLastState,
+} from "./core/storage.js";
 import { diffTemplateVsReportByParagraphs } from "./core/diff.js";
 import { loadSettings, saveSettings } from "./core/config.js";
 import { el } from "./ui/dom.js";
 import { showToast } from "./ui/toast.js";
 import { renderTemplateList } from "./ui/templates.js";
 import { buildEditor } from "./ui/editor.js";
-import { createSpeechController, insertAtCursorTextarea, insertAtCaretContentEditable } from "./ui/speech.js";
+import {
+  createSpeechController,
+  insertAtCursorTextarea,
+  insertAtCaretContentEditable,
+} from "./ui/speech.js";
 let speechReportRef = null;
 let speechEditorRef = null;
 
 // DOM refs
-const tplList     = el("#tplList");
+const tplList = el("#tplList");
 const templateTxt = el("#templateTxt");
-const reportTxt   = el("#reportTxt");
-const outputTxt   = el("#outputTxt");
-const mTotal      = el("#mTotal");
-const mChanged    = el("#mChanged");
-const mPct        = el("#mPct");
-const copyBtn     = el("#copyBtn");
+const reportTxt = el("#reportTxt");
+const outputTxt = el("#outputTxt");
+const mTotal = el("#mTotal");
+const mChanged = el("#mChanged");
+const mPct = el("#mPct");
+const copyBtn = el("#copyBtn");
 
 // Estado
 let templates = loadTemplates();
@@ -42,7 +52,10 @@ function doRenderTemplateList() {
     onRename: (name) => {
       const newName = prompt("Nuevo nombre de la plantilla:", name);
       if (!newName || newName === name) return;
-      if (templates[newName]) { showToast("Ya existe una plantilla con ese nombre."); return; }
+      if (templates[newName]) {
+        showToast("Ya existe una plantilla con ese nombre.");
+        return;
+      }
       templates[newName] = templates[name];
       delete templates[name];
       saveTemplates(templates, showToast);
@@ -61,9 +74,15 @@ function doRenderTemplateList() {
 }
 
 // Eventos de entrada (auto-guardado)
-if (templateTxt) templateTxt.addEventListener("input", ()=> saveLastState(templateTxt, reportTxt));
-if (reportTxt)   reportTxt.addEventListener("input",   ()=> saveLastState(templateTxt, reportTxt));
-if (outputTxt)   outputTxt.addEventListener("input",   refreshCopyState);
+if (templateTxt)
+  templateTxt.addEventListener("input", () =>
+    saveLastState(templateTxt, reportTxt)
+  );
+if (reportTxt)
+  reportTxt.addEventListener("input", () =>
+    saveLastState(templateTxt, reportTxt)
+  );
+if (outputTxt) outputTxt.addEventListener("input", refreshCopyState);
 
 // Botones de archivos / acciones
 el("#fileTpl")?.addEventListener("change", async (ev) => {
@@ -82,11 +101,15 @@ el("#fileTpl")?.addEventListener("change", async (ev) => {
 
 el("#saveTplBtn")?.addEventListener("click", () => {
   const content = templateTxt.value.trimEnd();
-  if (!content.trim()) { showToast("La plantilla está vacía."); return; }
+  if (!content.trim()) {
+    showToast("La plantilla está vacía.");
+    return;
+  }
   const defaultName = "Plantilla nueva";
   const name = prompt("Nombre de la plantilla:", defaultName);
   if (!name) return;
-  if (templates[name] && !confirm(`"${name}" ya existe. ¿Sobrescribir?`)) return;
+  if (templates[name] && !confirm(`"${name}" ya existe. ¿Sobrescribir?`))
+    return;
   templates[name] = content;
   saveTemplates(templates, showToast);
   doRenderTemplateList();
@@ -95,7 +118,7 @@ el("#saveTplBtn")?.addEventListener("click", () => {
 
 const clearTplBtn = el("#clearTplBtn");
 if (clearTplBtn) {
-  clearTplBtn.addEventListener("click", ()=>{
+  clearTplBtn.addEventListener("click", () => {
     templateTxt.value = "";
     saveLastState(templateTxt, reportTxt);
     showToast("Plantilla borrada");
@@ -103,11 +126,14 @@ if (clearTplBtn) {
 }
 
 el("#compareBtn")?.addEventListener("click", () => {
-  const { text, metrics } = diffTemplateVsReportByParagraphs(templateTxt.value, reportTxt.value);
-  outputTxt.value = text;
-  mTotal.textContent   = metrics.total_frases_informe;
+  const { text, metrics } = diffTemplateVsReportByParagraphs(
+    templateTxt.value,
+    reportTxt.value
+  );
+  outputTxt.innerHTML = text;
+  mTotal.textContent = metrics.total_frases_informe;
   mChanged.textContent = metrics.frases_con_cambios;
-  mPct.textContent     = metrics.porcentaje_cambio_frases + "%";
+  mPct.textContent = metrics.porcentaje_cambio_frases + "%";
   refreshCopyState();
   saveLastState(templateTxt, reportTxt);
   showToast("Comparación lista");
@@ -115,21 +141,19 @@ el("#compareBtn")?.addEventListener("click", () => {
 
 el("#copyBtn")?.addEventListener("click", async () => {
   try {
-    await navigator.clipboard.writeText(outputTxt.value);
+    await navigator.clipboard.writeText(outputTxt.innerText);
     showToast("Salida copiada al portapapeles");
   } catch (e) {
-    outputTxt.select();
-    document.execCommand("copy");
-    showToast("Salida copiada (método alternativo)");
+    showToast("Error al copiar. Intenta seleccionar y copiar manualmente.");
   }
 });
 
 el("#clearReportBtn")?.addEventListener("click", () => {
   reportTxt.value = "";
-  outputTxt.value = "";
-  mTotal.textContent   = 0;
+  outputTxt.innerHTML = "";
+  mTotal.textContent = 0;
   mChanged.textContent = 0;
-  mPct.textContent     = "0%";
+  mPct.textContent = "0%";
   refreshCopyState();
   saveLastState(templateTxt, reportTxt);
   reportTxt.focus();
@@ -137,55 +161,79 @@ el("#clearReportBtn")?.addEventListener("click", () => {
 });
 
 el("#recoverReportBtn")?.addEventListener("click", () => {
-    const lastState = getLastState();
-    if (lastState?.report) {
-        reportTxt.value = lastState.report;
-        saveLastState(templateTxt, reportTxt); // Actualiza el estado por si acaso
-        showToast("Último informe recuperado");
-    } else {
-        showToast("No se encontró un informe para recuperar");
-    }
+  const lastState = getLastState();
+  if (lastState?.report) {
+    reportTxt.value = lastState.report;
+    saveLastState(templateTxt, reportTxt); // Actualiza el estado por si acaso
+    showToast("Último informe recuperado");
+  } else {
+    showToast("No se encontró un informe para recuperar");
+  }
 });
 
 // Editor modal
 const editorModal = document.getElementById("editorModal");
-const edEditor    = document.getElementById("edEditor");
-const edUseBase   = document.getElementById("edUseBase");
+const edEditor = document.getElementById("edEditor");
+const edUseBase = document.getElementById("edUseBase");
 const edNormalize = document.getElementById("edNormalize");
-const edCopy      = document.getElementById("edCopy");
-const edSaveBack  = document.getElementById("edSaveBack");
-const edClose     = document.getElementById("edClose");
+const edCopy = document.getElementById("edCopy");
+const edSaveBack = document.getElementById("edSaveBack");
+const edClose = document.getElementById("edClose");
 const edKeepHeads = document.getElementById("edKeepHeads");
 
 const { openEditorWith } = buildEditor({
-  editorModal, edEditor, edUseBase, edNormalize, edCopy, edSaveBack, edClose, edKeepHeads, outputTxt, AppConfig
+  editorModal,
+  edEditor,
+  edUseBase,
+  edNormalize,
+  edCopy,
+  edSaveBack,
+  edClose,
+  edKeepHeads,
+  outputTxt,
+  AppConfig,
 });
 
-document.getElementById("editOutBtn")?.addEventListener("click", ()=>{
-  const src = (outputTxt?.value || "").trimEnd();
-  if(!src){ showToast("No hay salida para editar."); return; }
+document.getElementById("editOutBtn")?.addEventListener("click", () => {
+  const src = (outputTxt?.innerHTML || "").trimEnd();
+  if (!src) {
+    showToast("No hay salida para editar.");
+    return;
+  }
   openEditorWith(src);
 });
 
-
 /* =================== Dictado Web Speech — REPORT TXT =================== */
-(function initReportDictation(){
+(function initReportDictation() {
   const btn = document.getElementById("micReportBtn");
   if (!btn) return;
 
   const dot = btn.querySelector(".mic-dot");
 
   const correctionMap = [
-  ["birads", "BI-RADS"],
-  ["lirads", "LI-RADS"], ["li rads", "LI-RADS"],
-  ["hipo denso", "hipodenso"], ["hiper denso", "hiperdenso"],
-  ["hipo intenso", "hipointenso"], ["hiper intenso", "hiperintenso"],
-  ["hounsfield", "Hounsfield"], ["hu", "HU"],
-  ["colédoco", "colédoco"], ["coledoco", "colédoco"],
-  ["milimetros", "mm"], ["milímetros", "mm"], ["centimetros", "cm"], ["centímetros","cm"],
-  ["t 1", "T1"], ["t 2", "T2"], ["dwi", "DWI"], ["adc", "ADC"],
-  ["suv", "SUV"], ["vc i", "VCI"], ["vb i", "VBI"]
-];
+    ["birads", "BI-RADS"],
+    ["lirads", "LI-RADS"],
+    ["li rads", "LI-RADS"],
+    ["hipo denso", "hipodenso"],
+    ["hiper denso", "hiperdenso"],
+    ["hipo intenso", "hipointenso"],
+    ["hiper intenso", "hiperintenso"],
+    ["hounsfield", "Hounsfield"],
+    ["hu", "HU"],
+    ["colédoco", "colédoco"],
+    ["coledoco", "colédoco"],
+    ["milimetros", "mm"],
+    ["milímetros", "mm"],
+    ["centimetros", "cm"],
+    ["centímetros", "cm"],
+    ["t 1", "T1"],
+    ["t 2", "T2"],
+    ["dwi", "DWI"],
+    ["adc", "ADC"],
+    ["suv", "SUV"],
+    ["vc i", "VCI"],
+    ["vb i", "VBI"],
+  ];
 
   const speech = createSpeechController({
     lang: "es-CL",
@@ -211,7 +259,10 @@ document.getElementById("editOutBtn")?.addEventListener("click", ()=>{
     },
     onFinal: (txt) => {
       // Inserta el final en el caret del textarea
-      insertAtCursorTextarea(reportTxt, (reportTxt?.value?.endsWith(" ") ? "" : " ") + txt);
+      insertAtCursorTextarea(
+        reportTxt,
+        (reportTxt?.value?.endsWith(" ") ? "" : " ") + txt
+      );
     },
   });
 
@@ -226,7 +277,7 @@ document.getElementById("editOutBtn")?.addEventListener("click", ()=>{
 })();
 
 /* =================== Dictado Web Speech — EDITOR MODAL =================== */
-(function initEditorDictation(){
+(function initEditorDictation() {
   const btn = document.getElementById("edMicBtn");
   if (!btn) return;
   const dot = btn.querySelector(".mic-dot");
@@ -253,10 +304,14 @@ document.getElementById("editOutBtn")?.addEventListener("click", ()=>{
     },
     onFinal: (txt) => {
       // Inserta en el caret del contenteditable (texto plano)
-      insertAtCaretContentEditable(edEditor, (edEditor?.innerText?.endsWith(" ") ? "" : " ") + txt);
+      insertAtCaretContentEditable(
+        edEditor,
+        (edEditor?.innerText?.endsWith(" ") ? "" : " ") + txt
+      );
       // Dispara tu render de diffs en el siguiente frame (si lo necesitas)
-      if (edEditor && edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
-      edEditor._renderTimer = requestAnimationFrame(()=> {
+      if (edEditor && edEditor._renderTimer)
+        cancelAnimationFrame(edEditor._renderTimer);
+      edEditor._renderTimer = requestAnimationFrame(() => {
         // Forzamos un evento input para que tu editor recalcule cambios
         edEditor.dispatchEvent(new Event("input", { bubbles: true }));
       });
@@ -286,13 +341,11 @@ document.getElementById("editOutBtn")?.addEventListener("click", ()=>{
 // Referencias a los controles ya creados en el MVP
 const micReportBtn = document.getElementById("micReportBtn");
 const micReportDot = micReportBtn?.querySelector(".mic-dot");
-const edMicBtn     = document.getElementById("edMicBtn");
-const edMicDot     = edMicBtn?.querySelector(".mic-dot");
+const edMicBtn = document.getElementById("edMicBtn");
+const edMicDot = edMicBtn?.querySelector(".mic-dot");
 
 // ⚠️ Guardamos las instancias de dictado creadas en los inits previos.
 // Si seguiste mi MVP, expón las instancias así:
-
-
 
 // Helpers de UI para marcar estado
 function setBtnState(btn, dot, active) {
@@ -302,108 +355,124 @@ function setBtnState(btn, dot, active) {
 }
 
 (function initSettingsModal() {
-    const modal = el("#settingsModal");
-    const openBtn = el("#settingsBtn");
-    const closeBtn = el("#settingsClose");
-    const saveBtn = el("#settingsSave");
-    const downloadBtn = el("#settingsDownloadBtn");
-    const loadFileBtn = el("#settingsLoadFile");
-    const wordsTxt = el("#excludedWordsTxt");
-    if (!modal) return;
+  const modal = el("#settingsModal");
+  const openBtn = el("#settingsBtn");
+  const closeBtn = el("#settingsClose");
+  const saveBtn = el("#settingsSave");
+  const downloadBtn = el("#settingsDownloadBtn");
+  const loadFileBtn = el("#settingsLoadFile");
+  const wordsTxt = el("#excludedWordsTxt");
+  if (!modal) return;
 
-    const openModal = () => {
-        // Carga las palabras actuales en el textarea
-        wordsTxt.value = [...AppConfig.excludedWords].join("\n");
-        modal.setAttribute("aria-hidden", "false");
-        document.body.style.overflow = "hidden";
-    };
+  const openModal = () => {
+    // Carga las palabras actuales en el textarea
+    wordsTxt.value = [...AppConfig.excludedWords].join("\n");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
 
-    const closeModal = () => {
-      
-        document.getElementById('settingsBtn')?.focus();
-        modal.setAttribute("aria-hidden", "true");
-        document.body.style.overflow = "";
-    };
+  const closeModal = () => {
+    document.getElementById("settingsBtn")?.focus();
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
 
-    openBtn?.addEventListener("click", openModal);
-    closeBtn?.addEventListener("click", closeModal);
-    modal.addEventListener("click", (e) => {
-        if (e.target.dataset.close) closeModal();
-    });
+  openBtn?.addEventListener("click", openModal);
+  closeBtn?.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target.dataset.close) closeModal();
+  });
 
-    saveBtn?.addEventListener("click", () => {
-        const words = wordsTxt.value.split("\n")
-            .map(w => w.toUpperCase().trim())
-            .filter(Boolean);
-        AppConfig.excludedWords = new Set(words);
-        
-        // console.log('✅ Configuración guardada en memoria:', AppConfig.excludedWords);
+  saveBtn?.addEventListener("click", () => {
+    const words = wordsTxt.value
+      .split("\n")
+      .map((w) => w.toUpperCase().trim())
+      .filter(Boolean);
+    AppConfig.excludedWords = new Set(words);
 
-        saveSettings(AppConfig, showToast);
-        showToast("Configuración guardada");
-        closeModal();
-    });
+    // console.log('✅ Configuración guardada en memoria:', AppConfig.excludedWords);
 
-    downloadBtn?.addEventListener("click", () => {
-        const dataStr = JSON.stringify({ excludedWords: [...AppConfig.excludedWords] }, null, 2);
-        const blob = new Blob([dataStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "comparador-settings.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    });
+    saveSettings(AppConfig, showToast);
+    showToast("Configuración guardada");
+    closeModal();
+  });
 
-    loadFileBtn?.addEventListener("change", async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+  downloadBtn?.addEventListener("click", () => {
+    const dataStr = JSON.stringify(
+      { excludedWords: [...AppConfig.excludedWords] },
+      null,
+      2
+    );
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "comparador-settings.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
 
-        try {
-            const text = await file.text();
-            let words = [];
-            
-            // Lógica para decidir el formato
-            if (file.name.toLowerCase().endsWith(".json")) {
-                // Si es JSON, intenta parsearlo
-                const data = JSON.parse(text);
-                if (data && Array.isArray(data.excludedWords)) {
-                    words = data.excludedWords;
-                    showToast(`Configuración cargada desde ${file.name}`);
-                } else {
-                    throw new Error("El archivo JSON no tiene el formato esperado.");
-                }
-            } else {
-                // Si no es JSON, trátalo como TXT
-                words = text.split(/[\n,;]+/).map(w => w.trim()).filter(Boolean);
-                showToast(`${words.length} palabras cargadas desde ${file.name}`);
-            }
-            
-            // Actualiza el textarea con las palabras cargadas
-            wordsTxt.value = words.join("\n");
+  loadFileBtn?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-        } catch (err) {
-            showToast("Error al leer el archivo: " + err.message);
+    try {
+      const text = await file.text();
+      let words = [];
+
+      // Lógica para decidir el formato
+      if (file.name.toLowerCase().endsWith(".json")) {
+        // Si es JSON, intenta parsearlo
+        const data = JSON.parse(text);
+        if (data && Array.isArray(data.excludedWords)) {
+          words = data.excludedWords;
+          showToast(`Configuración cargada desde ${file.name}`);
+        } else {
+          throw new Error("El archivo JSON no tiene el formato esperado.");
         }
-        e.target.value = ""; // Resetea el input para poder cargar el mismo archivo de nuevo
-    });
+      } else {
+        // Si no es JSON, trátalo como TXT
+        words = text
+          .split(/[\n,;]+/)
+          .map((w) => w.trim())
+          .filter(Boolean);
+        showToast(`${words.length} palabras cargadas desde ${file.name}`);
+      }
+
+      // Actualiza el textarea con las palabras cargadas
+      wordsTxt.value = words.join("\n");
+    } catch (err) {
+      showToast("Error al leer el archivo: " + err.message);
+    }
+    e.target.value = ""; // Resetea el input para poder cargar el mismo archivo de nuevo
+  });
 })();
 
 // ¿Dónde dictamos? Si el editor está visible, priorízalo; si no, al informe.
-function pickActiveTarget(){
+function pickActiveTarget() {
   const editorOpen = editorModal?.getAttribute("aria-hidden") === "false";
   if (editorOpen && edEditor) {
     edEditor.focus();
-    return { kind: "editor", speech: speechEditorRef, btn: edMicBtn, dot: edMicDot };
+    return {
+      kind: "editor",
+      speech: speechEditorRef,
+      btn: edMicBtn,
+      dot: edMicDot,
+    };
   }
   reportTxt?.focus();
-  return { kind: "report", speech: speechReportRef, btn: micReportBtn, dot: micReportDot };
+  return {
+    kind: "report",
+    speech: speechReportRef,
+    btn: micReportBtn,
+    dot: micReportDot,
+  };
 }
 
 // Arrancar/detener con señales visuales
-function startDictation(){
+function startDictation() {
   const t = pickActiveTarget();
   if (!t?.speech || !t.speech.supported) {
     showToast("Dictado no disponible en este navegador");
@@ -413,7 +482,7 @@ function startDictation(){
   setBtnState(t.btn, t.dot, true);
   showToast(`Dictado iniciado (${t.kind})`);
 }
-function stopDictation(){
+function stopDictation() {
   if (speechReportRef?.isRunning()) {
     speechReportRef.stop();
     setBtnState(micReportBtn, micReportDot, false);
@@ -443,9 +512,6 @@ document.addEventListener("keyup", (e) => {
     stopDictation();
   }
 });
-
-
-
 
 // Init
 restoreOnLoad(templateTxt, reportTxt);

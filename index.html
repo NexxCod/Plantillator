@@ -41,12 +41,14 @@
                 <div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <h2>INFORME DEL RESIDENTE</h2>
-                        <button id="recoverReportBtn" class="btn-icon" title="Recuperar último informe guardado">↺</button>
+                        <button id="recoverReportBtn" class="btn-icon"
+                            title="Recuperar último informe guardado">↺</button>
                     </div>
                     <textarea id="reportTxt" placeholder="Pega aquí el INFORME del residente…"></textarea>
                     <div>
-                        <button id="micReportBtn" class="mic-btn" title="Dictar al informe (Web Speech). Atajo: Mantén presionado 'Alt'">
-                            🎤 
+                        <button id="micReportBtn" class="mic-btn"
+                            title="Dictar al informe (Web Speech). Atajo: Mantén presionado 'Alt'">
+                            🎤
                             <span class="mic-dot" style="display:none;"></span>
                         </button>
                         <span class="mic-hint">Atajo: Mantén presionada la tecla <b>Alt</b> para hablar.</span>
@@ -55,7 +57,8 @@
             </div>
 
             <h2 style="margin-top:14px;">SALIDA (frases distintas EN MAYÚSCULAS)</h2>
-            <textarea id="outputTxt" class="output" readonly placeholder="Aquí aparecerá la salida…"></textarea>
+            <div id="outputTxt" class="output" tabindex="0" aria-readonly="true" role="textbox" aria-multiline="true"
+                placeholder="Aquí aparecerá la salida…"></div>
 
             <div id="metrics" class="metrics">
                 <button id="editOutBtn" title="Editar la salida con control de cambios">Editar salida</button>
@@ -75,28 +78,34 @@
             </header>
 
             <div class="modal-toolbar">
-                <button id="edMicBtn" class="mic-btn" title="Dictar en el editor (Web Speech). Atajo: Mantén presionado 'Alt'">
+                <button id="edMicBtn" class="mic-btn"
+                    title="Dictar en el editor (Web Speech). Atajo: Mantén presionado 'Alt'">
                     🎤
                     <span class="mic-dot" style="display:none;"></span>
                 </button>
-                <button id="edUseBase" title="Fija el texto actual como la versión 'original' para la comparación visual">Limpiar resaltados</button>
+                <button id="edUseBase"
+                    title="Fija el texto actual como la versión 'original' para la comparación visual">Limpiar
+                    resaltados</button>
                 <label title="Conservar líneas que terminen en ':' al normalizar">
                     <input type="checkbox" id="edKeepHeads" checked> Mantener encabezados (líneas con “:”)
                 </label>
                 <div class="spacer"></div>
-                <button id="edNormalize" title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas">Normalizar</button>
+                <button id="edNormalize"
+                    title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas">Normalizar</button>
                 <button id="edCopy" title="Copiar texto plano del editor">📋</button>
-                <button id="edSaveBack" class="primary" title="Restaura el texto a cómo estaba cuando se abrió el editor">Restaurar original</button>
+                <button id="edSaveBack" class="primary"
+                    title="Restaura el texto a cómo estaba cuando se abrió el editor">Restaurar original</button>
             </div>
 
             <div id="edEditor" class="editor" contenteditable="true" spellcheck="false"
                 aria-label="Editor con control de cambios"></div>
         </div>
     </div>
-    
+
     <div id="settingsModal" class="modal" aria-hidden="true">
         <div class="modal-backdrop" data-close="1"></div>
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" style="max-width: 600px;">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"
+            style="max-width: 600px;">
             <header class="modal-head">
                 <h2 id="settingsTitle">Configuración</h2>
                 <button class="icon-btn" id="settingsClose" title="Cerrar">✕</button>
@@ -104,22 +113,23 @@
             <div style="padding: 12px 16px; display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
                 <h3>Palabras excluidas de la comparación</h3>
                 <p class="small" style="margin: -8px 0 0 0;">
-                    Lista de siglas o palabras (una por línea) que se ignorarán al comparar. Útil para términos como "LIRADS", "IV", etc. La comparación es insensible a mayúsculas.
+                    Lista de siglas o palabras (una por línea) que se ignorarán al editar. Útil para términos como
+                    "LIRADS", "IV", etc.
                 </p>
                 <textarea id="excludedWordsTxt" style="min-height: 200px; flex:1;"></textarea>
                 <div class="modal-toolbar" style="padding:0; border:none;">
-                <label class="btn" for="settingsLoadFile">Cargar archivo</label>
-                <input id="settingsLoadFile" type="file" accept=".txt,text/plain,.json,application/json" />
-                <button id="settingsDownloadBtn">Descargar</button>
-                <div class="spacer"></div>
-                <button id="settingsSave" class="primary">Guardar cambios</button>
-            </div>
+                    <label class="btn" for="settingsLoadFile">Cargar archivo</label>
+                    <input id="settingsLoadFile" type="file" accept=".txt,text/plain,.json,application/json" />
+                    <button id="settingsDownloadBtn">Descargar</button>
+                    <div class="spacer"></div>
+                    <button id="settingsSave" class="primary">Guardar cambios</button>
+                </div>
             </div>
         </div>
     </div>
 
     <footer>
-         © 2025 Marcelo Salinas Villagra · Versión 1.1
+        © 2025 Marcelo Salinas Villagra · Versión 1.1
     </footer>
     <div id="toast" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="./js/app.js"></script>

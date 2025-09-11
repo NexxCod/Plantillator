@@ -196,7 +196,7 @@ export function buildEditor({
   edClose,
   edKeepHeads,
   outputTxt,
-  AppConfig
+  AppConfig,
 }) {
   let edBaseText = "";
   let edBaseAcronyms = new Set();
@@ -208,81 +208,85 @@ export function buildEditor({
   };
   let lastInputType = "";
 
-  function renderEditorDiff() {
+   function renderEditorDiff() {
     const caret = getCaretOffset(edEditor);
     const base = edBaseText;
-    const currPlain = edEditor.innerText; // preserva saltos de línea
+    const currPlain = edEditor.innerText;
     const A = tokenize(base);
     const B = tokenize(currPlain);
     const ops = diffTokens(A, B);
 
     let html = "";
+    
     for (let i = 0; i < ops.length; i++) {
         const op = ops[i];
 
-        if (op.tag === "equal") {
-            const seg = B.slice(op.j0, op.j1).join('');
-            html += esc(seg);
-            continue; // Pasa a la siguiente operación
-        }
-
-        if (op.tag === "insert") {
-            // Hemos encontrado una inserción.
-            // Acumulamos su contenido y miramos si las siguientes operaciones también son inserciones.
+        if (op.tag === 'insert') {
+            // Es una edición nueva del usuario. Agrupamos y resaltamos en CIAN.
             let content = B.slice(op.j0, op.j1).join('');
             let lookahead = i + 1;
-
             while (lookahead < ops.length && ops[lookahead].tag === 'insert') {
-                const nextOp = ops[lookahead];
-                content += B.slice(nextOp.j0, nextOp.j1).join('');
+                content += B.slice(ops[lookahead].j0, ops[lookahead].j1).join('');
                 lookahead++;
             }
-
-            // Si el contenido agrupado no es solo espacio en blanco, lo envolvemos en <mark>
             if (content.trim().length > 0) {
                 html += `<mark class="add">${esc(content)}</mark>`;
             } else {
-                // Si solo era espacio, lo añadimos sin resaltar
                 html += esc(content);
             }
-
-            // Saltamos el índice del bucle principal hasta la última inserción que agrupamos
             i = lookahead - 1;
+
+        } else if (op.tag === 'equal') {
+            // El texto no ha cambiado. Verificamos si es un texto original en mayúsculas.
+            const content = B.slice(op.j0, op.j1).join('');
+            const letters = content.match(/\p{L}/gu)?.length || 0;
+            const isUpper = letters > 1 && content.trim() === content.trim().toUpperCase();
+
+            if (isUpper) {
+                // Si es mayúscula original, aplicamos el estilo ÁMBAR.
+                html += `<strong class="original-upper">${esc(content)}</strong>`;
+            } else {
+                // Si no, es texto normal.
+                html += esc(content);
+            }
         }
-        // Las operaciones 'delete' se ignoran en la salida visual, así que no se necesita un 'else'.
     }
 
     edEditor.innerHTML = html || "";
     setCaretOffset(edEditor, caret);
     edSession.html = edEditor.innerHTML;
-}
+  }
 
-  function openEditorWith(textFromOutput) {
+  function openEditorWith(htmlFromOutput) {
     editorModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
-    const src = textFromOutput || "";
-    if (edSession.sourceOutput === src && edSession.html) {
-      edBaseText = edSession.baseText || src;
-      edBaseAcronyms = edSession.acronyms || new Set();
+    const srcHtml = htmlFromOutput || "";
+
+    if (edSession.sourceOutput === srcHtml && edSession.html) {
       edEditor.innerHTML = edSession.html;
       edEditor.focus();
       return;
     }
-    edSession.sourceOutput = src;
-    edBaseText = src;
-    edBaseAcronyms = extractAcronymsSmart(edBaseText);
-    edEditor.innerHTML = boldUppercaseSentences(edBaseText);
-    renderEditorDiff();
+
+    edSession.sourceOutput = srcHtml;
+
+    // Establecemos el texto base y dejamos que renderEditorDiff haga toda la magia
+    let tempDiv = document.createElement('div');
+    tempDiv.innerHTML = srcHtml;
+    edBaseText = tempDiv.innerText;
+
+    edEditor.innerHTML = srcHtml; // Carga inicial con los estilos de la salida
+
     edSession.baseText = edBaseText;
-    edSession.acronyms = edBaseAcronyms;
+    edSession.acronyms = extractAcronymsSmart(edBaseText);
     edSession.html = edEditor.innerHTML;
     edEditor.focus();
   }
+  
   function closeEditor() {
-    document.getElementById('editOutBtn')?.focus();
+    document.getElementById("editOutBtn")?.focus();
     editorModal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
-    
   }
 
   // =================== Eventos ===================
@@ -296,21 +300,21 @@ export function buildEditor({
   if (edEditor) {
     // Interceptar Enter para insertar \n plano (sin <div>/<br>) y re-renderizar
     edEditor.addEventListener("keydown", (e) => {
-    // Si es Enter (sin Shift), inserta un salto de párrafo
-    if (e.key === "Enter" && !e.shiftKey) {
+      // Si es Enter (sin Shift), inserta un salto de párrafo
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         insertPlainTextAtSelection("\n\n"); // Salto doble
         if (edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
         edEditor._renderTimer = requestAnimationFrame(renderEditorDiff);
-    } 
-    // Si es Shift + Enter, inserta un salto de línea simple
-    else if (e.key === "Enter" && e.shiftKey) {
+      }
+      // Si es Shift + Enter, inserta un salto de línea simple
+      else if (e.key === "Enter" && e.shiftKey) {
         e.preventDefault();
         insertPlainTextAtSelection("\n"); // Salto simple
         if (edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
         edEditor._renderTimer = requestAnimationFrame(renderEditorDiff);
-    }
-});
+      }
+    });
 
     edEditor.addEventListener("beforeinput", (e) => {
       lastInputType = e.inputType || "";
@@ -371,26 +375,31 @@ export function buildEditor({
   }
 
   if (edSaveBack) {
-  edSaveBack.addEventListener("click", ()=>{
-    // Mostrar advertencia antes de restaurar
-    const ok = confirm("⚠️ ¿Seguro que deseas restaurar el texto al original? Se perderán todos los cambios realizados.");
-    if (!ok) return; // si cancela, no hacemos nada
+    edSaveBack.addEventListener("click", () => {
+      const ok = confirm(
+        "⚠️ ¿Seguro que deseas restaurar el texto al original? Se perderán todos los cambios realizados."
+      );
+      if (!ok) return;
 
-    // Restaurar el texto al estado original de la salida
-    const original = edSession?.sourceOutput ?? "";
+      const originalHtml = edSession?.sourceOutput ?? "";
 
-    edBaseText = original;
-    edBaseAcronyms = extractAcronymsSmart(edBaseText);
-    edEditor.textContent = original;   // carga el texto plano original
-    renderEditorDiff();                // recalcula resaltados/diffs
-    edSession.baseText = edBaseText;
-    edSession.acronyms = edBaseAcronyms;
-    edSession.html     = edEditor.innerHTML;
+      // --- LÓGICA CORREGIDA ---
+      // 1. Extrae el texto plano del HTML original para la base de comparación.
+      let tempDiv = document.createElement("div");
+      tempDiv.innerHTML = originalHtml;
+      edBaseText = tempDiv.innerText;
 
-    showToast("Texto restaurado al original");
-    // Ojo: no se cierra el editor, permanece abierto
-  });
-}
+      // 2. Inserta el HTML en el editor para que se vean los colores.
+      edEditor.innerHTML = originalHtml; // <--- ¡SOLUCIÓN!
+
+      // 3. Actualiza el resto de la sesión.
+      edSession.baseText = edBaseText;
+      edSession.acronyms = extractAcronymsSmart(edBaseText);
+      edSession.html = edEditor.innerHTML;
+
+      showToast("Texto restaurado al original");
+    });
+  }
 
   return { openEditorWith, closeEditor };
 }
