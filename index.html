@@ -6,21 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comparador de Informes - Plantillador</title>
     <link rel="stylesheet" href="./css/style.css">
+    <link rel="icon" href="/logo.ico" type="image/x-icon">
+    <link rel="icon" href="/img/logo.png" type="image/png">
 </head>
 
 <body>
     <header>
         <div class="wrap toolbar">
-            <label class="btn" for="fileTpl">📄 Cargar plantilla</label>
+            <label class="btn" for="fileTpl">📂 Cargar plantilla</label>
             <input id="fileTpl" type="file" accept=".txt,text/plain" />
             <button id="saveTplBtn" title="Guardar el contenido del cuadro de plantilla con un nombre">💾 Guardar
                 plantilla</button>
             <button id="clearTplBtn" title="Borra el contenido de la plantilla actual">🧹 Limpiar plantilla</button>
             <div class="spacer"></div>
-            <button id="settingsBtn" title="Configurar palabras excluidas">⚙️</button>
-            <button id="compareBtn">Comparar</button>
+            <button id="compareBtn">🔍 Comparar</button>
             <button id="copyBtn" title="Copiar salida">📋</button>
             <button id="clearReportBtn" title="Limpia el informe del residente y la salida">🧹 Limpiar informe</button>
+            <button id="settingsBtn" title="Configurar">⚙️</button>
+            <button id="helpBtn" title="Manual de uso">❓</button>
         </div>
     </header>
 
@@ -84,17 +87,16 @@
                     <span class="mic-dot" style="display:none;"></span>
                 </button>
                 <button id="edUseBase"
-                    title="Fija el texto actual como la versión 'original' para la comparación visual">Limpiar
-                    resaltados</button>
+                    title="Fija el texto actual como la versión 'original' para la comparación visual">🔦 Limpiar resaltados</button>
                 <label title="Conservar líneas que terminen en ':' al normalizar">
-                    <input type="checkbox" id="edKeepHeads" checked> Mantener encabezados (líneas con “:”)
+                    <input type="checkbox" id="edKeepHeads" checked>📌 Mantener encabezados (líneas con “:”)
                 </label>
                 <div class="spacer"></div>
                 <button id="edNormalize"
-                    title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas">Normalizar</button>
+                    title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas" >📐 Normalizar</button>
                 <button id="edCopy" title="Copiar texto plano del editor">📋</button>
-                <button id="edSaveBack" class="primary"
-                    title="Restaura el texto a cómo estaba cuando se abrió el editor">Restaurar original</button>
+                <button id="edSaveBack"
+                    title="Restaura el texto a cómo estaba cuando se abrió el editor">♻️ Restaurar original</button>
             </div>
 
             <div id="edEditor" class="editor" contenteditable="true" spellcheck="false"
@@ -144,9 +146,34 @@
         </div>
     </div>
 
+    <div id="helpModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close="1"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+            <header class="modal-head">
+                <h2 id="helpTitle">Manual de uso — Plantillador</h2>
+                <button class="icon-btn" id="helpClose" title="Cerrar">✕</button>
+            </header>
+
+            <div class="modal-toolbar">
+                <div class="spacer"></div>
+                <button id="helpDownload" class="primary" title="Descargar como PDF">Descargar PDF</button>
+            </div>
+
+            <div id="helpBody" class="editor" style="min-height: 60vh; white-space: normal;"></div>
+        </div>
+    </div>
+
 
     <footer>
-        Plantillador © 2025 Marcelo Salinas Villagra · Versión 1.0
+        <div class="footer-logo">
+            <img src="img/logo.png" alt="Plantillador Logo">
+        </div>
+        <div class="footer-text">
+            <span class="brand">Plantillador</span>
+            <span class="year">© 2025</span>
+            <span class="author">Marcelo Salinas Villagra</span>
+            <span class="version">· Versión 1.0</span>
+        </div>
     </footer>
     <div id="toast" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="./js/app.js"></script>

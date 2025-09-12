@@ -43,7 +43,7 @@ export function renderTemplateList({
 
     // Botón: Usar
     const useBtn = document.createElement("button");
-    useBtn.textContent = "Usar";
+    useBtn.textContent = "▶️ Usar";
     useBtn.title = "Aplicar plantilla";
     useBtn.addEventListener("click", () => {
       if (onUse) onUse(name);
@@ -51,7 +51,7 @@ export function renderTemplateList({
 
     // Botón: Renombrar
     const renBtn = document.createElement("button");
-    renBtn.textContent = "Renombrar";
+    renBtn.textContent = "✏️ Renombrar";
     renBtn.title = "Renombrar plantilla";
     renBtn.addEventListener("click", () => {
       if (onRename) onRename(name);
@@ -59,7 +59,7 @@ export function renderTemplateList({
 
     // Botón: Eliminar
     const delBtn = document.createElement("button");
-    delBtn.textContent = "Eliminar";
+    delBtn.textContent = "🗑️";
     delBtn.title = "Eliminar plantilla";
     delBtn.addEventListener("click", () => {
       if (onDelete) onDelete(name);

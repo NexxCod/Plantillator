@@ -198,11 +198,44 @@ textarea {
 .pill.warn { border-color: var(--warn); color: var(--warn); }
 
 footer {
-  max-width: 1300px;
-  margin: 6px auto 24px;
-  padding: 0 16px;
-  color: var(--muted);
-  text-align: right;
+  background: #0f172a;
+  color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 30px;
+  font-size: 0.9rem;
+}
+
+.footer-logo img {
+  height: 32px;
+  width: auto;
+}
+
+.footer-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.footer-text .brand {
+  font-weight: 600;
+  color: #22d3ee; /* cyan para resaltar */
+  letter-spacing: 0.5px;
+}
+
+.footer-text .year {
+  color: #94a3b8; /* gris suave */
+}
+
+.footer-text .author {
+  font-style: italic;
+  color: #cbd5e1;
+}
+
+.footer-text .version {
+  color: #f59e0b; /* ámbar para resaltar la versión */
 }
 
 .output { min-height: 260px; }
@@ -397,6 +430,13 @@ input:checked + .slider:before {
     background-color: var(--card);
     transform: translateX(22px);
 }
+
+#helpBody h3 { margin: 12px 0 6px; color: var(--accent); }
+#helpBody p, #helpBody li { color: var(--text); }
+#helpBody code { background:#0b1023; padding:2px 6px; border-radius:6px; border:1px solid var(--border); }
+#helpBody .kbd { border:1px solid var(--border); border-bottom-width:2px; padding:2px 6px; border-radius:6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+
 @keyframes mic-pulse {
   0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7); }
   70% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }

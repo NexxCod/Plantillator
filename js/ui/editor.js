@@ -139,25 +139,48 @@ function extractAcronymsSmart(text) {
 function toInformeCase(text, keepHeadings, acronyms) {
   const lf = text.replace(/\r\n/g, "\n");
   const lines = lf.split("\n");
+
   return lines
     .map((line) => {
-      const raw = line.trimEnd();
+      // 1) quita espacios al inicio/fin de cada línea
+      const raw = line.trim();
+
+      // Encabezados tipo "HALLAZGOS:" se mantienen en mayúsculas
       if (keepHeadings && /:\s*$/.test(raw)) return raw.toUpperCase();
+
+      // 2) baja a minúsculas
       let s = raw.toLowerCase();
+
+      // 3) corrige ESPACIADO alrededor de signos:
+      //   - quita espacios antes de , . ; : ! ? …
+      s = s.replace(/\s+([,.;:!?…])/g, "$1");
+      //   - quita espacios después de ( [ {
+      s = s.replace(/([(\[\{])\s+/g, "$1");
+      //   - quita espacios antes de ) ] }
+      s = s.replace(/\s+([)\]\}])/g, "$1");
+      //   - asegura UN espacio después de , ; : cuando viene letra/número
+      s = s.replace(/([,;:])\s*(?=\p{L}|\d)/gu, "$1 ");
+      //   - asegura UN espacio después de . ! ? … cuando viene letra/número
+      //     (evita insertar espacio si lo siguiente es fin de línea)
+      s = s.replace(/([.!?…])\s*(?=\p{L}|\d)/gu, "$1 ");
+
+      // 4) compacta espacios múltiples
+      s = s.replace(/\s{2,}/g, " ");
+
+      // 5) sentence-case: mayúscula al inicio y tras . ! ? …
       s = s.replace(
         /(^|[.!?…]\s+)(\p{L})/gu,
         (m, p, chr) => p + chr.toUpperCase()
       );
 
-      // La lógica principal ahora se basa en el Set de acrónimos que le pasamos
+      // 6) respeta SIGLAS (acronyms) si nos las pasan
       if (acronyms && acronyms.size) {
-        // La regex busca palabras completas para reemplazarlas
         s = s.replace(/\b([\p{L}\p{N}-]+)\b/gu, (m, word) => {
           const up = word.toUpperCase();
-          // Si la palabra en mayúsculas está en nuestro Set, la devolvemos en mayúsculas
           return acronyms.has(up) ? up : m;
         });
       }
+
       return s;
     })
     .join("\n");
