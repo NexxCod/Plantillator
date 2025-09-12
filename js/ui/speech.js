@@ -1,4 +1,5 @@
-// Web Speech controller (MVP) — sólo frontend
+// js/ui/speech.js
+
 export function createSpeechController({
   lang = "es-CL",
   onPartial = () => {},
@@ -23,13 +24,28 @@ export function createSpeechController({
   rec.continuous = true;
   rec.interimResults = true;
 
-  let running = false;
+  let running = false; // Estado interno que controlaremos nosotros // --- LÓGICA DE ESTADO MEJORADA --- // Los eventos de la API ahora solo se encargan de la parte visual/notificaciones
 
-  // Mapeo simple de comandos → puntuación/acciones
+  rec.onstart = () => {
+    // Si por alguna razón el navegador lo inicia y nuestro estado es falso, lo corregimos.
+    if (!running) running = true;
+    onStart();
+  };
+
+  rec.onend = () => {
+    // Si el navegador lo detiene (ej. por silencio) y nuestro estado es verdadero, lo corregimos.
+    if (running) running = false;
+    onEnd();
+  };
+
+  rec.onerror = (e) => {
+    // Si hay un error, nos aseguramos de que el estado quede como 'detenido'.
+    if (running) running = false;
+    onError(e);
+  }; // ... (la función mapCommands y rec.onresult se mantienen igual)
+
   function mapCommands(text) {
-    // normaliza para detectar comandos (no altera mayúsculas/siglas finales)
     const t = (text || "").toLowerCase().trim();
-
     const replacements = [
       [" punto y coma ", "; "],
       [" punto y coma", ";"],
@@ -52,15 +68,10 @@ export function createSpeechController({
       [" nuevo párrafo ", "\n\n"],
       [" nuevo parrafo ", "\n\n"],
     ];
-
     let out = " " + t + " ";
     for (const [k, v] of replacements) out = out.replaceAll(k, v);
     return out.trim();
   }
-
-  rec.onstart = () => { running = true; onStart(); };
-  rec.onend = () => { running = false; onEnd(); };
-  rec.onerror = (e) => onError(e);
 
   rec.onresult = (ev) => {
     let partial = "";
@@ -78,12 +89,37 @@ export function createSpeechController({
     if (finals.length) onFinal(mapCommands(finals.join(" ")));
   };
 
+  // --- MÉTODOS DE CONTROL CON ESTADO SINCRONIZADO ---
+  const start = () => {
+    if (running) return; // Si ya está corriendo, no hacer nada
+    try {
+      rec.start();
+      running = true; // Actualizamos el estado INMEDIATAMENTE
+    } catch (e) {
+      console.warn("Error al iniciar el dictado:", e.message);
+      running = false; // Nos aseguramos que el estado sea correcto si falla
+    }
+  };
+
+  const stop = () => {
+    if (!running) return; // Si ya está detenido, no hacer nada
+    try {
+      rec.stop();
+      running = false; // Actualizamos el estado INMEDIATAMENTE
+    } catch (e) {
+      console.warn("Error al detener el dictado:", e.message);
+      running = false;
+    }
+  };
+
   return {
     supported: true,
-    start: () => { if (!running) try { rec.start(); } catch(_) {} },
-    stop: () => { if (running) try { rec.stop(); } catch(_) {} },
-    toggle: () => { running ? rec.stop() : rec.start(); },
-    isRunning: () => running,
+    start,
+    stop,
+    toggle: () => {
+      running ? stop() : start();
+    },
+    isRunning: () => running, // Esta función ahora es 100% fiable
   };
 }
 
@@ -93,7 +129,7 @@ export function insertAtCursorTextarea(el, text) {
   const start = el.selectionStart ?? el.value.length;
   const end = el.selectionEnd ?? el.value.length;
   const before = el.value.slice(0, start);
-  const after  = el.value.slice(end);
+  const after = el.value.slice(end);
   el.value = before + text + after;
   const pos = start + text.length;
   el.selectionStart = el.selectionEnd = pos;
@@ -113,5 +149,6 @@ export function insertAtCaretContentEditable(root, text) {
   range.insertNode(node);
   range.setStartAfter(node);
   range.collapse(true);
-  sel.removeAllRanges(); sel.addRange(range);
+  sel.removeAllRanges();
+  sel.addRange(range);
 }

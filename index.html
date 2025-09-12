@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comparador de Informes</title>
+    <title>Comparador de Informes - Plantillador</title>
     <link rel="stylesheet" href="./css/style.css">
 </head>
 
@@ -111,6 +111,22 @@
                 <button class="icon-btn" id="settingsClose" title="Cerrar">✕</button>
             </header>
             <div style="padding: 12px 16px; display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
+                <div class="setting-row">
+                    <div>
+                        <h4>Modo de Dictado (Tecla `Alt`)</h4>
+                        <p class="small" style="margin:0;">Elige cómo se activa el micrófono con la
+                            tecla `Alt`.</p>
+                    </div>
+                    <div class="switch-container">
+                        <span class="switch-label">Pulsar y mantener</span>
+                        <label class="switch">
+                            <input type="checkbox" id="dictationModeToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="switch-label">Alternar (On/Off)</span>
+                    </div>
+                </div>
+                <hr style="border-color: var(--border); margin: 8px 0;">
                 <h3>Palabras excluidas de la comparación</h3>
                 <p class="small" style="margin: -8px 0 0 0;">
                     Lista de siglas o palabras (una por línea) que se ignorarán al editar. Útil para términos como
@@ -128,8 +144,9 @@
         </div>
     </div>
 
+
     <footer>
-        © 2025 Marcelo Salinas Villagra · Versión 1.1
+        Plantillador © 2025 Marcelo Salinas Villagra · Versión 1.0
     </footer>
     <div id="toast" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="./js/app.js"></script>

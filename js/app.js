@@ -36,7 +36,7 @@ let AppConfig = loadSettings();
 // Helpers UI
 function refreshCopyState() {
   if (!copyBtn) return;
-  copyBtn.disabled = !outputTxt.value.trim();
+  copyBtn.disabled = !outputTxt?.value?.trim();
 }
 
 // Render lista
@@ -362,11 +362,14 @@ function setBtnState(btn, dot, active) {
   const downloadBtn = el("#settingsDownloadBtn");
   const loadFileBtn = el("#settingsLoadFile");
   const wordsTxt = el("#excludedWordsTxt");
+  const dictationModeToggle = el("#dictationModeToggle");
+
   if (!modal) return;
 
   const openModal = () => {
     // Carga las palabras actuales en el textarea
     wordsTxt.value = [...AppConfig.excludedWords].join("\n");
+    dictationModeToggle.checked = AppConfig.dictationMode === "toggle";
     modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
   };
@@ -389,6 +392,7 @@ function setBtnState(btn, dot, active) {
       .map((w) => w.toUpperCase().trim())
       .filter(Boolean);
     AppConfig.excludedWords = new Set(words);
+    AppConfig.dictationMode = dictationModeToggle.checked ? "toggle" : "push";
 
     // console.log('✅ Configuración guardada en memoria:', AppConfig.excludedWords);
 
@@ -451,64 +455,70 @@ function setBtnState(btn, dot, active) {
 })();
 
 // ¿Dónde dictamos? Si el editor está visible, priorízalo; si no, al informe.
-function pickActiveTarget() {
+function getActiveSpeechController() {
   const editorOpen = editorModal?.getAttribute("aria-hidden") === "false";
   if (editorOpen && edEditor) {
     edEditor.focus();
-    return {
-      kind: "editor",
-      speech: speechEditorRef,
-      btn: edMicBtn,
-      dot: edMicDot,
-    };
+    return speechEditorRef;
   }
   reportTxt?.focus();
-  return {
-    kind: "report",
-    speech: speechReportRef,
-    btn: micReportBtn,
-    dot: micReportDot,
-  };
+  return speechReportRef;
 }
 
-// Arrancar/detener con señales visuales
+// Funciones de control principales que manejan la lógica Y la parte visual
 function startDictation() {
-  const t = pickActiveTarget();
-  if (!t?.speech || !t.speech.supported) {
+  const speech = getActiveSpeechController();
+  // Determina qué botón actualizar
+  const targetBtn = speech === speechEditorRef ? edMicBtn : micReportBtn;
+  const targetDot = speech === speechEditorRef ? edMicDot : micReportDot;
+
+  if (!speech || !speech.supported) {
     showToast("Dictado no disponible en este navegador");
     return;
   }
-  t.speech.start();
-  setBtnState(t.btn, t.dot, true);
-  showToast(`Dictado iniciado (${t.kind})`);
-}
-function stopDictation() {
-  if (speechReportRef?.isRunning()) {
-    speechReportRef.stop();
-    setBtnState(micReportBtn, micReportDot, false);
-  }
-  if (speechEditorRef?.isRunning()) {
-    speechEditorRef.stop();
-    setBtnState(edMicBtn, edMicDot, false);
-  }
-  showToast("Dictado detenido");
+
+  speech.start();
+  // La función setBtnState se llamará desde el evento 'onStart' del controlador
 }
 
-/* ---------- 1) Ctrl = Push-to-talk (mantén presionado) ---------- */
-let altHeld = false;
+function stopDictation() {
+  // Detenemos ambos controladores para asegurar que todo se apague
+  if (speechReportRef && speechReportRef.isRunning()) {
+    speechReportRef.stop();
+  }
+  if (speechEditorRef && speechEditorRef.isRunning()) {
+    speechEditorRef.stop();
+  }
+  // Los indicadores visuales se apagarán desde el evento 'onEnd' del controlador
+}
+
+let isDictationToggledOn = false;
+
+// --- Detectores de eventos del teclado (CORREGIDOS) ---
 document.addEventListener("keydown", (e) => {
-  if (e.repeat) return;
-  // Solo Alt sin combinaciones
-  if (e.key === "Alt" && !altHeld) {
-    e.preventDefault(); // Evita que el foco se vaya al menú del navegador
-    altHeld = true;
+  if (e.key !== "Alt" || e.repeat) return;
+  e.preventDefault();
+
+  if (AppConfig.dictationMode === "toggle") {
+    // Modo Alternar: Inicia/detiene y cambia el estado
+    if (isDictationToggledOn) {
+      stopDictation();
+    } else {
+      startDictation();
+    }
+    isDictationToggledOn = !isDictationToggledOn;
+  } else {
+    // Modo Pulsar: Solo inicia
     startDictation();
   }
 });
+
 document.addEventListener("keyup", (e) => {
-  if (e.key === "Alt" && altHeld) {
-    e.preventDefault();
-    altHeld = false;
+  if (e.key !== "Alt") return;
+  e.preventDefault();
+
+  if (AppConfig.dictationMode === "push") {
+    // En modo "Pulsar", siempre detenemos al soltar.
     stopDictation();
   }
 });
