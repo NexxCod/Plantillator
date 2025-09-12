@@ -454,6 +454,39 @@ function setBtnState(btn, dot, active) {
   });
 })();
 
+// ===== Manual externo (help.html) en iframe =====
+(function initExternalHelp(){
+  const helpBtn      = document.getElementById("helpBtn");
+  const helpModal    = document.getElementById("helpModal");
+  const helpClose    = document.getElementById("helpClose");
+  const helpFrame    = document.getElementById("helpFrame");
+  const helpOpenPdf  = document.getElementById("helpOpenPdf");
+
+  if (!helpBtn || !helpModal || !helpFrame) return;
+
+  // 👇 Ruta correcta según tu estructura
+  const HELP_URL = "./pages/help.html";
+
+  function openHelp(){
+    helpFrame.src = HELP_URL; // forzar carga siempre
+    helpModal.setAttribute("aria-hidden","false");
+    document.body.style.overflow = "hidden";
+  }
+  function closeHelp(){
+    helpModal.setAttribute("aria-hidden","true");
+    document.body.style.overflow = "";
+  }
+
+  helpFrame.addEventListener("error", () => {
+    alert("No se pudo cargar el manual (pages/help.html). Revisa la ruta o el servidor.");
+  });
+
+  helpBtn.addEventListener("click", openHelp);
+  helpClose?.addEventListener("click", closeHelp);
+  helpModal.addEventListener("click", (e)=>{ if (e.target?.dataset?.close) closeHelp(); });
+  helpOpenPdf?.addEventListener("click", ()=> window.open(HELP_URL, "_blank"));
+})();
+
 // ¿Dónde dictamos? Si el editor está visible, priorízalo; si no, al informe.
 function getActiveSpeechController() {
   const editorOpen = editorModal?.getAttribute("aria-hidden") === "false";

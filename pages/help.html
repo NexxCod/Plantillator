@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Manual de uso — Plantillador</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <style>
+        /* ===== Tema oscuro consistente con la app ===== */
+        :root {
+            --bg: #0f172a;
+            --card: #111827;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --border: #334155;
+            --accent: #22d3ee;
+            --warn: #f59e0b;
+            --good: #22c55e;
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial;
+            line-height: 1.55;
+        }
+
+        /* ===== Top toolbar ===== */
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            align-items: center;
+            background: rgba(15, 23, 42, .75);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 12px;
+        }
+
+        .btn {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            outline: 1px solid var(--accent);
+        }
+
+        /* ===== Layout ===== */
+        .page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 22px 18px 40px;
+        }
+
+        .lead {
+            color: var(--muted);
+            margin: 4px 0 18px;
+        }
+
+        /* ===== Tipografía ===== */
+        h1 {
+            font-size: 24px;
+            margin: 0 0 10px;
+            letter-spacing: .2px;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: var(--accent);
+            margin: 18px 0 10px;
+            letter-spacing: .2px;
+        }
+
+        h3 {
+            font-size: 16px;
+            color: var(--accent);
+            margin: 16px 0 8px;
+        }
+
+        p,
+        li {
+            color: var(--text);
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 20px 0;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .small {
+            color: var(--muted);
+        }
+
+        code {
+            background: #0b1023;
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+        }
+
+        .kbd {
+            border: 1px solid var(--border);
+            border-bottom-width: 2px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+            background: rgba(34, 211, 238, .08);
+        }
+
+        /* ===== Índice ===== */
+        .toc {
+            display: grid;
+            gap: 8px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(34, 211, 238, .04);
+            margin: 10px 0 18px;
+        }
+
+        .toc a {
+            display: block;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .toc a:hover {
+            border-color: var(--accent);
+        }
+
+        /* ===== Bloques visuales ===== */
+        .callout {
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            background: rgba(34, 211, 238, .04);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin: 12px 0;
+        }
+
+        /* ===== Galería / capturas ===== */
+        figure {
+            margin: 14px 0;
+        }
+
+        figcaption {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        /* Imagen base (mantiene proporciones y bordes bonitos) */
+        .shot {
+            display: block;
+            width: 100%;
+            background: #0b1023;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            object-fit: cover;
+            /* recorte sutil si la proporción no coincide */
+        }
+
+        /* Anchos y relaciones recomendadas */
+        .shot.wide {
+            aspect-ratio: 14 / 10;
+        }
+
+        /* vistas generales – recomendado 1200×675 */
+        .shot.half {
+            aspect-ratio: 16 / 14;
+        }
+
+        /* dos por fila – recomendado 900×560 */
+        .shot.tall {
+            aspect-ratio: 3 / 4;
+        }
+
+        /* modales / paneles altos – recomendado 900×1200 */
+
+        /* Dos columnas para medias capturas */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 720px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== Listas compactas con check ===== */
+        .checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .checklist li::before {
+            content: "✅ ";
+        }
+
+        /* ===== Imprimir (PDF) ===== */
+        @media print {
+            :root {
+                --bg: #ffffff;
+                --card: #ffffff;
+                --text: #111827;
+                --muted: #6b7280;
+                --border: #e5e7eb;
+                --accent: #0ea5e9;
+            }
+
+            body {
+                background: #fff;
+                color: var(--text);
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .page {
+                max-width: none;
+                padding: 0;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            code {
+                background: #f8fafc;
+                border-color: #e2e8f0;
+            }
+
+            .shot {
+                border-color: #e5e7eb;
+            }
+        }
+
+       /* ======== Impresión / PDF oscuro ======== */
+@page {
+  size: A4 portrait;
+  margin: 18mm 16mm;          /* márgenes del PDF */
+}
+
+@media print {
+  /* ¡Conservar colores de fondo! */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    .page { padding: 0 !important; margin: 0 !important; }
+  }
+
+  /* Mantener tema oscuro */
+  :root{
+    /* usa tus mismos tokens del tema oscuro */
+    --bg:#0f172a;        /* slate-900 */
+    --card:#111827;      /* gray-900 */
+    --text:#e5e7eb;      /* gray-200 */
+    --muted:#94a3b8;     /* slate-400 */
+    --border:#334155;    /* slate-700 */
+    --accent:#22d3ee;    /* cyan-400 */
+    --warn:#f59e0b;      /* amber-500 */
+  }
+
+  html, body { background: var(--bg) !important; }
+  .page      { background: var(--bg) !important; padding: 0 !important; max-width: none; }
+
+  /* Oculta la barra de acciones del manual */
+  .toolbar { display: none !important; }
+
+  /* Evitar cortes feos de bloques habituales */
+  h1, h3, p, ul, ol, table, pre, code, blockquote, .card, .img-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Imágenes/capturas con tamaños listos para PDF */
+  .img-lg { width: 100%; max-width: 175mm; display:block; margin: 10px auto; }
+  .img-md { width: 100%; max-width: 140mm; display:block; margin: 10px auto; }
+  .img-sm { width: 100%; max-width: 100mm; display:block; margin: 10px auto; }
+  .caption{ font-size: 11px; color: var(--muted); text-align: center; margin-top: 4px; }
+
+  /* Enlaces sin decoración al imprimir */
+  a { color: var(--text) !important; text-decoration: none !important; }
+
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Barra fija con acción de impresión -->
+    <div class="toolbar">
+        <button class="btn" onclick="window.print()">Imprimir / Guardar como PDF</button>
+    </div>
+
+    <main class="page" id="helpBody">
+        <h1>Manual de uso — Plantillador</h1>
+        <p class="lead">Comparador por párrafos y oraciones con editor y dictado. Esta guía cubre flujo, atajos y
+            trucos, alineada al código de tu app.</p>
+
+        <!-- ======================= Índice ======================= -->
+        <nav class="toc">
+            <a href="#ui">Mapa de la interfaz</a>
+            <a href="#workflow">Flujo básico</a>
+            <a href="#templates">Gestión de plantillas</a>
+            <a href="#dictation">Dictado por voz</a>
+            <a href="#compare">Comparar & métricas</a>
+            <a href="#editor">Editor con control de cambios</a>
+            <a href="#normalize">Normalizar (reglas)</a>
+            <a href="#settings">Configuración (⚙️)</a>
+            <a href="#shortcuts">Atajos de teclado</a>
+            <a href="#troubleshooting">Problemas comunes</a>
+            <a href="#privacy">Privacidad y almacenamiento</a>
+            <a href="#about">Acerca de</a>
+        </nav>
+
+        <!-- ============= 1) UI map ============= -->
+        <section id="ui">
+            <h2>1) Mapa de la interfaz</h2>
+            <p>La app se compone de barra superior, columna de <b>Plantillas</b>, área de <b>Plantilla</b> y
+                <b>Informe</b>, y la <b>Salida</b> con métricas y acceso al editor.
+            </p>
+
+            <figure>
+                <!-- Recomendado 1200×675 -->
+                <img class="shot" src="../img/help/ui-overview.png" alt="Vista general de Plantillador" />
+                <figcaption>Vista general. Sube o escribe tu plantilla (izquierda), pega o dicta el informe (derecha) y
+                    pulsa <b>Comparar</b>.</figcaption>
+            </figure>
+
+            <div class="grid-2">
+                <figure>
+                    <!-- Recomendado 900×560 -->
+                    <img class="shot half" src="../img/help/ui-templates.png" alt="Columna de plantillas" />
+                    <figcaption>Columna de plantillas con acciones: <i>Usar</i>, <i>Renombrar</i>, <i>Eliminar</i>.
+                    </figcaption>
+                </figure>
+                <figure>
+                    <img class="shot half" src="../img/help/ui-output.png" alt="Salida y métricas" />
+                    <figcaption>Salida y métricas: frases totales, con cambios y porcentaje.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============= 2) Workflow ============= -->
+        <section id="workflow">
+            <h2>2) Flujo básico</h2>
+            <ol>
+                <li><b>Plantilla:</b> carga un .txt o escribe tu base.</li>
+                <li><b>Informe:</b> pega el texto o usa el micrófono (🎤).</li>
+                <li><b>Comparar:</b> el sistema alinea por <b>párrafos</b> y compara por <b>oraciones</b>.</li>
+                <li><b>Salida:</b> las oraciones con cambios se muestran en <b>MAYÚSCULAS ámbar</b> (en la salida) y el
+                    resto se mantiene normal.</li>
+                <li><b>Editar salida:</b> abre el editor con control de cambios para pulir.</li>
+                <li><b>Copiar:</b> copia el resultado de la salida en el portapapeles.</li>
+            </ol>
+            <div class="callout">
+                <b>Consejo:</b> pega el informe crudo; posteriormente el botón <b>Normalizar</b> del editor corrige
+                espacios, mayúsculas y siglas.
+            </div>
+        </section>
+
+        <!-- ============= 3) Plantillas ============= -->
+        <section id="templates">
+            <h2>3) Gestión de plantillas</h2>
+            <ul class="checklist">
+                <li><b>Guardar plantilla</b>: almacena el contenido actual con un nombre.</li>
+                <li><b>Usar</b>: coloca la plantilla elegida en el cuadro de la izquierda.</li>
+                <li><b>Renombrar</b> y <b>Eliminar</b> desde la lista.</li>
+            </ul>
+            <p class="small">Se guardan en <code>localStorage</code> del navegador (disponibles solo en el mismo
+                equipo/navegador).</p>
+
+        </section>
+
+        <!-- ============= 4) Dictado ============= -->
+        <section id="dictation">
+            <h2>4) Dictado por voz (Web Speech)</h2>
+            <ul>
+                <li>Botón 🎤 en <b>Informe</b> o en el <b>Editor</b>.</li>
+                <li>Atajo configurable con <span class="kbd">Alt</span> (modo <i>pulsar</i> o <i>alternar</i> en ⚙️).
+                </li>
+                <li>Comandos útiles: “punto”, “coma”, “dos puntos”, “nueva línea”, “nuevo párrafo”.</li>
+            </ul>
+        </section>
+
+        <!-- ============= 5) Comparar & métricas ============= -->
+        <section id="compare">
+            <h2>5) Comparar & métricas</h2>
+            <p>El algoritmo alinea cada <b>párrafo del informe</b> con su mejor <b>match</b> de la plantilla y compara
+                por <b>oraciones</b>. Inserciones/reemplazos cuentan como “cambios”.</p>
+            <ul>
+                <li><b>📝 Frases en informe</b>: total detectado.</li>
+                <li><b>🔄 Frases con cambios</b>: oraciones insertadas/reemplazadas o plantillas eliminadas.</li>
+                <li><b>📊 % cambio</b>: <code>cambios / máx(informe, plantilla)</code>.</li>
+            </ul>
+            <figure>
+                <img class="shot wide" src="../img/help/metrics.png" alt="Métricas de comparación" />
+                <figcaption>Métricas tras pulsar <b>Comparar</b>.</figcaption>
+            </figure>
+        </section>
+
+        <!-- ============= 6) Editor ============= -->
+        <section id="editor">
+            <h2>6) Editor con control de cambios</h2>
+            <ul>
+                <li>Texto base = la salida inicial; las <b>inserciones</b> aparecen con fondo <i>cian</i>.</li>
+                <li>El texto original en <b>MAYÚSCULAS</b> se pinta <b>ámbar</b> (sin fondo).</li>
+                <li><b>Enter</b> = nuevo párrafo (doble salto). <b>Shift+Enter</b> = salto simple.</li>
+                <li><b>Limpiar resaltados</b>: fija el estado actual como “original”.</li>
+                <li><b>Restaurar original</b>: vuelve al HTML de salida con estilos originales.</li>
+                <li><b>Copiar</b>: copia texto plano del editor.</li>
+            </ul>
+
+            <div class="grid-2">
+                <figure>
+                    <img class="shot half" src="../img/help/editor-before.png" alt="Editor antes de editar" />
+                    <figcaption>Estado inicial al abrir el editor.</figcaption>
+                </figure>
+                <figure>
+                    <img class="shot half" src="../img/help/editor-after.png" alt="Editor con cambios" />
+                    <figcaption>Inserciones en cian; original en ámbar sin fondo.</figcaption>
+                </figure>
+            </div>
+
+            <figure>
+                <!-- Modal alto: 900×1200 sugerido -->
+                <img class="shot" src="../img/help/editor-modal.png" alt="Modal del editor" />
+                <figcaption>Barra del editor con acciones (🎤, Limpiar, Normalizar, Copiar, Restaurar).</figcaption>
+            </figure>
+        </section>
+
+        <!-- ============= 7) Normalizar ============= -->
+        <section id="normalize">
+            <h2>7) Normalizar (reglas aplicadas)</h2>
+            <ul>
+                <li>Quita espacios sobrantes: antes de <code>, . ; : ! ? …</code>, alrededor de paréntesis y corchetes.
+                </li>
+                <li>Asegura un espacio tras <code>, ; :</code> y tras <code>. ! ? …</code> cuando sigue texto.</li>
+                <li>Sentence case: mayúscula al inicio de línea y tras punto/exclamación/interrogación.</li>
+                <li>Respeta <b>siglas</b> (lista en ⚙️ “Palabras excluidas”) y unidades comunes
+                    (<code>mm, cm, ml…</code>).</li>
+                <li>Encabezados que terminan en <code>:</code> se mantienen en MAYÚSCULAS si activas “📌 Mantener
+                    encabezados”.</li>
+            </ul>
+
+            <div class="grid-2">
+                <figure>
+                    <img class="shot half" src="../img/help/normalize-before.png" alt="Antes de normalizar" />
+                    <figcaption>Texto crudo con mayúsculas/espacios inconsistentes.</figcaption>
+                </figure>
+                <figure>
+                    <img class="shot half" src="../img/help/normalize-after.png" alt="Después de normalizar" />
+                    <figcaption>Espaciado corregido y capitalización coherente.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============= 8) Configuración ============= -->
+        <section id="settings">
+            <h2>8) Configuración (⚙️)</h2>
+            <ul>
+                <li><b>Modo de dictado</b> con <span class="kbd">Alt</span>: <i>Pulsar y mantener</i> o <i>Alternar</i>.
+                </li>
+                <li><b>Palabras excluidas</b>: lista de siglas/terminología que <i>no</i> se alterará al normalizar.
+                </li>
+                <li>Importa/Exporta esta lista en <code>.json</code>.</li>
+            </ul>
+            <figure>
+                <img class="shot" src="../img/help/settings.png" alt="Modal de configuración" />
+                <figcaption>Modal de Configuración con switch de dictado y lista de exclusión.</figcaption>
+            </figure>
+        </section>
+
+        <!-- ============= 9) Atajos ============= -->
+        <section id="shortcuts">
+            <h2>9) Atajos de teclado</h2>
+            <ul>
+                <li><span class="kbd">Alt</span> — iniciar/detener dictado (según modo).</li>
+                <li>Editor: <span class="kbd">Enter</span> = párrafo; <span class="kbd">Shift</span> + <span
+                        class="kbd">Enter</span> = línea.</li>
+            </ul>
+        </section>
+
+        <!-- ============= 10) Problemas comunes ============= -->
+        <section id="troubleshooting">
+            <h2>10) Problemas comunes</h2>
+            <ul>
+                <li><b>Dictado no inicia/detiene</b>: revisa permisos del micrófono y el modo de dictado en ⚙️; recarga
+                    la página.</li>
+                <li><b>Métricas no coinciden</b>: ejecuta <b>Comparar</b> nuevamente después de editar la salida.</li>
+                <li><b>Plantillas desaparecieron</b>: limpiar caché borra <code>localStorage</code>.</li>
+            </ul>
+        </section>
+
+        <!-- ============= 11) Privacidad ============= -->
+        <section id="privacy">
+            <h2>11) Privacidad y almacenamiento</h2>
+            <p>Tus plantillas y el último estado (plantilla/informe) se guardan localmente usando
+                <code>localStorage</code>. No se envían a servidores.
+            </p>
+        </section>
+
+        <!-- ============= 12) Acerca de ============= -->
+        <section id="about">
+            <h2>12) Acerca de</h2>
+            <p class="small">Plantillador © 2025 Marcelo Salinas Villagra · Versión 1.0</p>
+            <p class="small">Contacto: <a href="mailto:drmsalinasv@gmail.com">drmsalinasv@gmail.com</a></p>
+        </section>
+    </main>
+</body>
+
+</html>

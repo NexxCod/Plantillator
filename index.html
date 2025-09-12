@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="./css/style.css">
     <link rel="icon" href="/logo.ico" type="image/x-icon">
     <link rel="icon" href="/img/logo.png" type="image/png">
+    <link rel="prefetch" href="./pages/help.html">
 </head>
 
 <body>
@@ -64,10 +65,10 @@
                 placeholder="Aquí aparecerá la salida…"></div>
 
             <div id="metrics" class="metrics">
-                <button id="editOutBtn" title="Editar la salida con control de cambios">Editar salida</button>
-                <span class="pill">Frases en informe: <b id="mTotal">0</b></span>
-                <span class="pill warn">Frases con cambios: <b id="mChanged">0</b></span>
-                <span class="pill good">% cambio (frases): <b id="mPct">0%</b></span>
+                <button id="editOutBtn" title="Editar la salida con control de cambios">✏️ Editar salida</button>
+                <span class="pill">📝 Frases en informe: <b id="mTotal">0</b></span>
+                <span class="pill warn"> 🔄 Frases con cambios: <b id="mChanged">0</b></span>
+                <span class="pill good"> 📊 % cambio (frases): <b id="mPct">0%</b></span>
             </div>
         </section>
     </main>
@@ -87,16 +88,17 @@
                     <span class="mic-dot" style="display:none;"></span>
                 </button>
                 <button id="edUseBase"
-                    title="Fija el texto actual como la versión 'original' para la comparación visual">🔦 Limpiar resaltados</button>
+                    title="Fija el texto actual como la versión 'original' para la comparación visual">🔦 Limpiar
+                    resaltados</button>
                 <label title="Conservar líneas que terminen en ':' al normalizar">
                     <input type="checkbox" id="edKeepHeads" checked>📌 Mantener encabezados (líneas con “:”)
                 </label>
                 <div class="spacer"></div>
-                <button id="edNormalize"
-                    title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas" >📐 Normalizar</button>
+                <button id="edNormalize" title="Quita MAYÚSCULAS, aplica sentence case y respeta siglas">📐
+                    Normalizar</button>
                 <button id="edCopy" title="Copiar texto plano del editor">📋</button>
-                <button id="edSaveBack"
-                    title="Restaura el texto a cómo estaba cuando se abrió el editor">♻️ Restaurar original</button>
+                <button id="edSaveBack" title="Restaura el texto a cómo estaba cuando se abrió el editor">♻️ Restaurar
+                    original</button>
             </div>
 
             <div id="edEditor" class="editor" contenteditable="true" spellcheck="false"
@@ -147,21 +149,21 @@
     </div>
 
     <div id="helpModal" class="modal" aria-hidden="true">
-        <div class="modal-backdrop" data-close="1"></div>
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-            <header class="modal-head">
-                <h2 id="helpTitle">Manual de uso — Plantillador</h2>
-                <button class="icon-btn" id="helpClose" title="Cerrar">✕</button>
-            </header>
+  <div class="modal-backdrop" data-close="1"></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle" style="max-width:900px;">
+    <header class="modal-head">
+      <h2 id="helpTitle">Manual de uso</h2>
+      <button class="icon-btn" id="helpClose" title="Cerrar">✕</button>
+    </header>
 
-            <div class="modal-toolbar">
-                <div class="spacer"></div>
-                <button id="helpDownload" class="primary" title="Descargar como PDF">Descargar PDF</button>
-            </div>
-
-            <div id="helpBody" class="editor" style="min-height: 60vh; white-space: normal;"></div>
-        </div>
+    <div class="modal-toolbar">
+      <div class="spacer"></div>
+      <button id="helpOpenPdf" class="primary" title="Abrir en pestaña para imprimir/guardar PDF">Abrir en pestaña</button>
     </div>
+
+    <iframe id="helpFrame" src="" style="border:none; width:100%; height:70vh;"></iframe>
+  </div>
+</div>
 
 
     <footer>
