@@ -293,12 +293,12 @@ div.output:empty:before {
 .editor strong{ font-weight:700; }
 
 .editor .original-upper {
-    background: rgba(245, 158, 11, 0.25); /* Color --warn (amber) con opacidad */
     color: var(--warn);
-    padding: 1px 3px;
-    border-radius: 4px;
-    font-weight: 600;
-    box-decoration-break: clone;
+    font-weight: inherit;   /* <strong> ya no se ve en negrita */
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-decoration-break: initial;
 }
 
 
@@ -308,6 +308,8 @@ div.output:empty:before {
   color: inherit; /* Mantiene el color del texto normal */
   text-decoration: none; /* Quita cualquier subrayado por defecto del <mark> */
   box-decoration-break: clone; /* Asegura que el fondo se dibuje correctamente en saltos de línea */
+  display: inline;
+  white-space: pre-wrap;
 
 }
 .editor del.del{ color:#94a3b8; text-decoration:line-through; }

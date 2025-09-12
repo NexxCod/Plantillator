@@ -50,10 +50,6 @@ function insertPlainTextAtSelection(text) {
   sel.removeAllRanges();
   sel.addRange(range);
 }
-function insertPlainNewline() {
-  // Un \n; se renderiza como salto gracias a white-space: pre-wrap en .editor
-  insertPlainTextAtSelection("\n");
-}
 
 // =================== Diff por tokens ===================
 function tokenize(str) {
@@ -167,24 +163,6 @@ function toInformeCase(text, keepHeadings, acronyms) {
     .join("\n");
 }
 
-function boldUppercaseSentences(plainText) {
-  const segs = (plainText || "").split(/(\n{2,})/);
-  const out = segs
-    .map((chunk) => {
-      if (/\n{2,}/.test(chunk)) return chunk;
-      const parts = chunk.match(/[^.!?…\n]+[.!?…]*|\n+/gu) || [chunk];
-      return parts
-        .map((p) => {
-          const letters = p.match(/\p{L}/gu)?.length || 0;
-          const isUpper = letters > 0 && p === p.toUpperCase();
-          return isUpper ? `<strong>${esc(p)}</strong>` : esc(p);
-        })
-        .join("");
-    })
-    .join("");
-  return out;
-}
-
 // =================== Editor ===================
 export function buildEditor({
   editorModal,
@@ -208,54 +186,78 @@ export function buildEditor({
   };
   let lastInputType = "";
 
-   function renderEditorDiff() {
-    const caret = getCaretOffset(edEditor);
-    const base = edBaseText;
-    const currPlain = edEditor.innerText;
-    const A = tokenize(base);
-    const B = tokenize(currPlain);
-    const ops = diffTokens(A, B);
+  function renderEditorDiff() {
+  const caret = getCaretOffset(edEditor);
+  const base = edBaseText;
+  const currPlain = edEditor.innerText;
+  const A = tokenize(base);
+  const B = tokenize(currPlain);
+  const ops = diffTokens(A, B);
 
-    let html = "";
-    
-    for (let i = 0; i < ops.length; i++) {
-        const op = ops[i];
+  let html = "";
 
-        if (op.tag === 'insert') {
-            // Es una edición nueva del usuario. Agrupamos y resaltamos en CIAN.
-            let content = B.slice(op.j0, op.j1).join('');
-            let lookahead = i + 1;
-            while (lookahead < ops.length && ops[lookahead].tag === 'insert') {
-                content += B.slice(ops[lookahead].j0, ops[lookahead].j1).join('');
-                lookahead++;
-            }
-            if (content.trim().length > 0) {
-                html += `<mark class="add">${esc(content)}</mark>`;
-            } else {
-                html += esc(content);
-            }
-            i = lookahead - 1;
+  // helper: decide si un tramo (por índices de A) era MAYÚSCULA en el TEXTO BASE
+  function isBaseUpper(i0, i1) {
+    const baseSeg = A.slice(i0, i1).join("");
+    const letters = baseSeg.match(/\p{L}/gu)?.length || 0;
+    return letters > 1 && baseSeg.trim() === baseSeg.trim().toUpperCase();
+  }
 
-        } else if (op.tag === 'equal') {
-            // El texto no ha cambiado. Verificamos si es un texto original en mayúsculas.
-            const content = B.slice(op.j0, op.j1).join('');
-            const letters = content.match(/\p{L}/gu)?.length || 0;
-            const isUpper = letters > 1 && content.trim() === content.trim().toUpperCase();
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i];
 
-            if (isUpper) {
-                // Si es mayúscula original, aplicamos el estilo ÁMBAR.
-                html += `<strong class="original-upper">${esc(content)}</strong>`;
-            } else {
-                // Si no, es texto normal.
-                html += esc(content);
-            }
-        }
+    if (op.tag === "insert") {
+      // 🔹 fusiona inserts adyacentes en un solo <mark>
+      let content = B.slice(op.j0, op.j1).join("");
+      let look = i + 1;
+      while (look < ops.length && ops[look].tag === "insert") {
+        content += B.slice(ops[look].j0, ops[look].j1).join("");
+        look++;
+      }
+      html += content.trim().length > 0
+        ? `<mark class="add">${esc(content)}</mark>`
+        : esc(content);
+      i = look - 1;
+      continue;
     }
 
-    edEditor.innerHTML = html || "";
-    setCaretOffset(edEditor, caret);
-    edSession.html = edEditor.innerHTML;
+    if (op.tag === "equal") {
+      // 🔸 ¿Este tramo era ÁMBAR en el TEXTO BASE?
+      const upper = isBaseUpper(op.i0, op.i1);
+
+      if (!upper) {
+        // igual “normal”: escápalo y sigue
+        html += esc(B.slice(op.j0, op.j1).join(""));
+        continue;
+      }
+
+      // 🔸 upper = true → fusiona TODOS los equal consecutivos que también sean upper
+      let jContent = B.slice(op.j0, op.j1).join("");
+      let iStart = op.i0, iEnd = op.i1;
+      let look = i + 1;
+
+      while (
+        look < ops.length &&
+        ops[look].tag === "equal" &&
+        isBaseUpper(ops[look].i0, ops[look].i1)
+      ) {
+        jContent += B.slice(ops[look].j0, ops[look].j1).join("");
+        iEnd = ops[look].i1;
+        look++;
+      }
+
+      html += `<strong class="original-upper">${esc(jContent)}</strong>`;
+      i = look - 1; // saltar los equal ya fusionados
+      continue;
+    }
+
+    // (delete) no se muestra; si quieres visualizarlos añade aquí un <del>
   }
+
+  edEditor.innerHTML = html || "";
+  setCaretOffset(edEditor, caret);
+  edSession.html = edEditor.innerHTML;
+}
 
   function openEditorWith(htmlFromOutput) {
     editorModal.setAttribute("aria-hidden", "false");
@@ -271,7 +273,7 @@ export function buildEditor({
     edSession.sourceOutput = srcHtml;
 
     // Establecemos el texto base y dejamos que renderEditorDiff haga toda la magia
-    let tempDiv = document.createElement('div');
+    let tempDiv = document.createElement("div");
     tempDiv.innerHTML = srcHtml;
     edBaseText = tempDiv.innerText;
 
@@ -282,11 +284,16 @@ export function buildEditor({
     edSession.html = edEditor.innerHTML;
     edEditor.focus();
   }
-  
+
   function closeEditor() {
     document.getElementById("editOutBtn")?.focus();
     editorModal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
+  }
+
+  function scheduleRender() {
+    if (edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
+    edEditor._renderTimer = requestAnimationFrame(renderEditorDiff);
   }
 
   // =================== Eventos ===================
@@ -300,35 +307,28 @@ export function buildEditor({
   if (edEditor) {
     // Interceptar Enter para insertar \n plano (sin <div>/<br>) y re-renderizar
     edEditor.addEventListener("keydown", (e) => {
-      // Si es Enter (sin Shift), inserta un salto de párrafo
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter") {
         e.preventDefault();
-        insertPlainTextAtSelection("\n\n"); // Salto doble
-        if (edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
-        edEditor._renderTimer = requestAnimationFrame(renderEditorDiff);
-      }
-      // Si es Shift + Enter, inserta un salto de línea simple
-      else if (e.key === "Enter" && e.shiftKey) {
-        e.preventDefault();
-        insertPlainTextAtSelection("\n"); // Salto simple
-        if (edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
-        edEditor._renderTimer = requestAnimationFrame(renderEditorDiff);
+        // Convención:
+        //  - Enter            -> nuevo párrafo (doble salto)
+        //  - Shift + Enter    -> salto de línea simple
+        insertPlainTextAtSelection(e.shiftKey ? "\n" : "\n\n");
+        scheduleRender();
       }
     });
 
     edEditor.addEventListener("beforeinput", (e) => {
       lastInputType = e.inputType || "";
+      if (
+        e.inputType === "insertParagraph" ||
+        e.inputType === "insertLineBreak"
+      ) {
+        e.preventDefault(); // evita doble salto o inconsistencias
+      }
     });
 
     edEditor.addEventListener("input", () => {
-      // Respaldo por si algún navegador dispara insertParagraph
-      if (lastInputType === "insertParagraph") {
-        lastInputType = "";
-        setTimeout(renderEditorDiff, 0);
-        return;
-      }
-      if (edEditor._renderTimer) cancelAnimationFrame(edEditor._renderTimer);
-      edEditor._renderTimer = requestAnimationFrame(renderEditorDiff);
+      scheduleRender();
     });
   }
 
