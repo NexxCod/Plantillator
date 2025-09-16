@@ -1,7 +1,7 @@
 // Normalización y tokenización
 export function normalizeForCompare(s) {
   const str = (s || "").normalize("NFKC");
-  const noDiacritics = str.normalize("NFD").replace(/[\u00c0-\u024f]/g, (c) => DIACRITICS[c] || c);
+  const noDiacritics = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   return noDiacritics
     .toLowerCase()
     .replace(/[ \t\r]+/g, " ")
