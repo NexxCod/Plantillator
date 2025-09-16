@@ -27,17 +27,11 @@ const outputTxt = el("#outputTxt");
 const mTotal = el("#mTotal");
 const mChanged = el("#mChanged");
 const mPct = el("#mPct");
-const copyBtn = el("#copyBtn");
 
 // Estado
 let templates = loadTemplates();
 let AppConfig = loadSettings();
 
-// Helpers UI
-function refreshCopyState() {
-  if (!copyBtn) return;
-  copyBtn.disabled = !outputTxt?.value?.trim();
-}
 
 // Render lista
 function doRenderTemplateList() {
@@ -82,7 +76,6 @@ if (reportTxt)
   reportTxt.addEventListener("input", () =>
     saveLastState(templateTxt, reportTxt)
   );
-if (outputTxt) outputTxt.addEventListener("input", refreshCopyState);
 
 // Botones de archivos / acciones
 el("#fileTpl")?.addEventListener("change", async (ev) => {
@@ -134,30 +127,20 @@ el("#compareBtn")?.addEventListener("click", () => {
   mTotal.textContent = metrics.total_frases_informe;
   mChanged.textContent = metrics.frases_con_cambios;
   mPct.textContent = metrics.porcentaje_cambio_frases + "%";
-  refreshCopyState();
   saveLastState(templateTxt, reportTxt);
   showToast("Comparación lista");
+  openEditorWith(outputTxt.innerHTML);
 });
 
-el("#copyBtn")?.addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(outputTxt.innerText);
-    showToast("Salida copiada al portapapeles");
-  } catch (e) {
-    showToast("Error al copiar. Intenta seleccionar y copiar manualmente.");
-  }
-});
 
 el("#clearReportBtn")?.addEventListener("click", () => {
   reportTxt.value = "";
-  outputTxt.innerHTML = "";
   mTotal.textContent = 0;
   mChanged.textContent = 0;
   mPct.textContent = "0%";
-  refreshCopyState();
   saveLastState(templateTxt, reportTxt);
   reportTxt.focus();
-  showToast("Informe y salida limpiados");
+  showToast("Informe limpiado");
 });
 
 el("#recoverReportBtn")?.addEventListener("click", () => {
@@ -194,14 +177,6 @@ const { openEditorWith } = buildEditor({
   AppConfig,
 });
 
-document.getElementById("editOutBtn")?.addEventListener("click", () => {
-  const src = (outputTxt?.innerHTML || "").trimEnd();
-  if (!src) {
-    showToast("No hay salida para editar.");
-    return;
-  }
-  openEditorWith(src);
-});
 
 /* =================== Dictado Web Speech — REPORT TXT =================== */
 (function initReportDictation() {
