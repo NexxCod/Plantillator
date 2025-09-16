@@ -49,14 +49,7 @@
                             title="Recuperar último informe guardado">↺</button>
                     </div>
                     <textarea id="reportTxt" placeholder="Pega aquí el INFORME del residente…"></textarea>
-                    <div>
-                        <button id="micReportBtn" class="mic-btn"
-                            title="Dictar al informe (Web Speech). Atajo: Mantén presionado 'Alt'">
-                            🎤
-                            <span class="mic-dot" style="display:none;"></span>
-                        </button>
-                        <span class="mic-hint">Atajo: Mantén presionada la tecla <b>Alt</b> para hablar.</span>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -69,7 +62,16 @@
                 <span class="pill">📝 Frases en informe: <b id="mTotal">0</b></span>
                 <span class="pill warn"> 🔄 Frases con cambios: <b id="mChanged">0</b></span>
                 <span class="pill good"> 📊 % cambio (frases): <b id="mPct">0%</b></span>
+                <div>
+                        <button id="micReportBtn" class="mic-btn"
+                            title="Dictar al informe (Web Speech). Atajo: Mantén presionado 'Alt'">
+                            🎤
+                            <span class="mic-dot" style="display:none;"></span>
+                        </button>
+                        <span class="mic-hint">Atajo: Mantén presionada la tecla <b>Alt</b> para hablar.</span>
+                    </div>
             </div>
+            
         </section>
     </main>
 

@@ -83,7 +83,8 @@ main {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  min-height: 0;              /* permite que los hijos con overflow se compriman */
+  min-height: 0;
+  position: relative;
 }
 
 h2 {
@@ -112,6 +113,13 @@ textarea {
   font-size: 12px;
   color: var(--muted);
   flex: 0 0 auto;
+}
+
+#micReportBtn {
+  position: absolute;
+  bottom: 12px;   /* separación del borde inferior */
+  right: 16px;    /* separación del borde derecho */
+  z-index: 5;     /* encima del contenido */
 }
 
 /* ========== Lista de plantillas ========== */
@@ -188,10 +196,12 @@ textarea {
 
 .metrics {
   display: flex;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
   margin-top: 10px;
 }
+
 .pill {
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -443,13 +453,21 @@ input:checked + .slider:before {
 #helpBody code { background:#0b1023; padding:2px 6px; border-radius:6px; border:1px solid var(--border); }
 #helpBody .kbd { border:1px solid var(--border); border-bottom-width:2px; padding:2px 6px; border-radius:6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
+.mic-hint { font-size: 12px; color: var(--muted); margin-left: 8px; }
+
+#metrics > div {
+  display: flex;
+  align-items: center;  /* centra verticalmente texto con botón */
+  gap: 8px;             /* espacio fijo entre botón y texto */
+  margin-top: 6px;      /* un poco de separación respecto a las pills */
+}
 
 @keyframes mic-pulse {
   0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7); }
   70% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }
   100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
 }
-.mic-hint { font-size: 12px; color: var(--muted); margin-left: 8px; }
+
 
 
 @media (min-width: 1440px){
