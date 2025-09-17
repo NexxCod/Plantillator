@@ -1,5 +1,6 @@
-// js/ui/orgPanel2.js
+// js/ui/orgPanel.js
 // Org panel + overlay highlights. Clean UTF-8 implementation.
+import { ORGANS } from '../data/organs.js';
 
 function debounce(fn, wait = 200) {
   let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), wait); };
@@ -9,6 +10,12 @@ function debounce(fn, wait = 200) {
 const WORD_CHAR = /[\p{L}\p{N}]/u;
 const isBoundary = (ch) => !ch || !WORD_CHAR.test(ch);
 const stripDiacritics = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+// Presentación: primera letra mayúscula y sin guiones bajos
+function formatDisplayName(s) {
+  const clean = String(s || '').replace(/_/g, ' ').trim();
+  if (!clean) return '';
+  return clean.charAt(0).toLocaleUpperCase('es') + clean.slice(1);
+}
 function findFirstWordIndex(haystack, needle) {
   if (!needle) return -1;
   const text = String(haystack);
@@ -108,9 +115,12 @@ export const OrgPanel = (() => {
       { name: 'intestino',syns: ['colon', 'recto', 'asas de intestino'] },
     ];
   }
+  function externalDefaultDict() {
+    return Array.isArray(ORGANS) ? ORGANS : [];
+  }
   function loadDict() {
     try { const raw = localStorage.getItem(STORE_KEY); const arr = raw ? JSON.parse(raw) : null; if (Array.isArray(arr)) return arr; } catch {}
-    return defaultDict();
+    return externalDefaultDict();
   }
   function saveDictLocal(d) { try { localStorage.setItem(STORE_KEY, JSON.stringify(d)); } catch {} }
   function dictToTextarea() {
@@ -188,6 +198,8 @@ export const OrgPanel = (() => {
       btn.innerHTML = `<span class="dot c${it.color}"></span><span class="name">${it.name}</span>`;
       btn.addEventListener('click', () => jumpToOrgan(it.name));
       els.list.appendChild(btn);
+      const nameEl = btn.querySelector('.name');
+      if (nameEl) nameEl.textContent = formatDisplayName(it.name);
     }
   }
 
