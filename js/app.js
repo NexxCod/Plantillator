@@ -16,8 +16,14 @@ import {
   insertAtCursorTextarea,
   insertAtCaretContentEditable,
 } from "./ui/speech.js";
+
+import { OrgPanel } from './ui/orgPanel.js';
+
+
+
 let speechReportRef = null;
 let speechEditorRef = null;
+
 
 // DOM refs
 const tplList = el("#tplList");
@@ -124,12 +130,14 @@ el("#compareBtn")?.addEventListener("click", () => {
     reportTxt.value
   );
   outputTxt.innerHTML = text;
-  mTotal.textContent = metrics.total_frases_informe;
+  mTotal.textContent   = metrics.total_frases_informe;
   mChanged.textContent = metrics.frases_con_cambios;
-  mPct.textContent = metrics.porcentaje_cambio_frases + "%";
+  mPct.textContent     = metrics.porcentaje_cambio_frases + "%";
   saveLastState(templateTxt, reportTxt);
   showToast("Comparación lista");
-  openEditorWith(outputTxt.innerHTML);
+
+  // ✨ abre el editor y sincroniza el panel
+  openEditorWithAndPanel(outputTxt.innerHTML);
 });
 
 
@@ -157,6 +165,7 @@ el("#recoverReportBtn")?.addEventListener("click", () => {
 // Editor modal
 const editorModal = document.getElementById("editorModal");
 const edEditor = document.getElementById("edEditor");
+const modalCard = editorModal.querySelector(".modal-card");
 const edUseBase = document.getElementById("edUseBase");
 const edNormalize = document.getElementById("edNormalize");
 const edCopy = document.getElementById("edCopy");
@@ -176,6 +185,78 @@ const { openEditorWith } = buildEditor({
   outputTxt,
   AppConfig,
 });
+
+
+// Panel (ids ya están en tu HTML)
+OrgPanel.init({
+  modalCard,
+  editor: edEditor,
+  overlay: document.getElementById('orgOverlay'),  // <-- NUEVO
+  toggleBtn: document.getElementById('orgPanelToggle'),
+  handleBtn: document.getElementById('orgHandle'),
+  list: document.getElementById('orgList'),
+  editBtn: document.getElementById('orgEditBtn'),
+  editorBox: document.getElementById('orgEditor'),
+  textarea: document.getElementById('orgTextarea'),
+  saveBtn: document.getElementById('orgSaveBtn'),
+  cancelBtn: document.getElementById('orgCancelBtn'),
+  downloadBtn: document.getElementById('orgDownloadBtn'),
+});
+
+// --- Editor modal (API) ---
+const editorAPI = buildEditor({
+  editorModal,
+  edEditor,
+  edUseBase,
+  edNormalize,
+  edCopy,
+  edSaveBack,
+  edClose,
+  edKeepHeads,
+  outputTxt,
+  AppConfig,
+});
+
+// Forzar manejo de Enter para evitar líneas duplicadas
+if (edEditor) {
+  // Captura antes que otros listeners del editor
+  edEditor.addEventListener('beforeinput', (e) => {
+    if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+  edEditor.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      // Inserta un solo salto; si quieres párrafo, presiona Enter dos veces
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount) {
+        const r = sel.getRangeAt(0);
+        r.deleteContents();
+        r.insertNode(document.createTextNode('\n'));
+        r.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(r);
+      }
+    }
+  }, true);
+}
+
+// Envoltorios para sincronizar el panel de órganos con la apertura/cierre del editor
+function openEditorWithAndPanel(html) {
+  editorAPI.openEditorWith(html); // abre el modal y rellena el editor
+  OrgPanel.onOpen();              // pinta y engancha listeners del panel
+}
+
+function closeEditorAndPanel() {
+  OrgPanel.onClose();             // limpia resaltados/listeners del panel
+  editorAPI.closeEditor();        // cierra el modal
+}
+
+// Opcional: cuando hagan click en la X, además de cerrar, limpia el panel
+edClose?.addEventListener("click", () => OrgPanel.onClose());
 
 
 /* =================== Dictado Web Speech — REPORT TXT =================== */
@@ -534,4 +615,5 @@ document.addEventListener("keyup", (e) => {
 // Init
 restoreOnLoad(templateTxt, reportTxt);
 doRenderTemplateList();
-refreshCopyState();
+// Algunas versiones traían esta utilidad; si no existe, ignoramos el error.
+try { if (typeof refreshCopyState === 'function') refreshCopyState(); } catch {}

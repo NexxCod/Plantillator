@@ -12,6 +12,10 @@
   --gutter: 20px;
 }
 * { box-sizing: border-box; }
+:root{
+  --org-width: 260px;
+  --org-width-edit: 460px;
+}
 
 body {
   margin: 0;
@@ -462,6 +466,101 @@ input:checked + .slider:before {
   margin-top: 6px;      /* un poco de separación respecto a las pills */
 }
 
+/* ===== Panel de �rganos (flyout izquierda) ===== */
+:root{
+  --org-width: 260px;
+  --org-width-edit: 460px;
+  --org-top: 98px;
+}
+
+.org-panel{
+  position:absolute;
+  top: var(--org-top);
+  bottom: 14px;
+  left: 14px;
+  width: var(--org-width);
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  padding:10px;
+  z-index:5;
+  display:none;
+}
+.modal-card.show-orgs .org-panel{ display:block; }
+.modal-card.show-orgs .org-panel.editing{ width: var(--org-width-edit); }
+
+.modal-card .editor-wrap{
+  position:relative;
+  margin-left:0;
+  transition: margin .22s ease;
+  flex:1; min-height:0;
+  overflow-y:auto; overflow-x:hidden;
+}
+.modal-card.show-orgs .editor-wrap{ margin-left: calc(var(--org-width) + 20px); }
+.modal-card.show-orgs.edit-mode .editor-wrap{ margin-left: calc(var(--org-width-edit) + 20px); }/* cabecera del panel / lista / editor diccionario (igual que antes) */
+.org-head{ display:flex; align-items:center; gap:8px; padding:6px 4px 10px; border-bottom:1px solid var(--border); }
+.org-head .spacer{ flex:1; }
+.org-list{ margin-top:8px; display:flex; flex-direction:column; gap:6px; max-height: 55vh; overflow:auto; }
+.org-item{ display:flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:10px; padding:8px 10px; cursor:pointer; background:#0c1226; }
+.org-item:hover{ border-color: var(--accent); }
+.org-item .dot{ width:10px; height:10px; border-radius:999px; flex:0 0 auto; background: var(--accent); }
+.org-item .name{ font-weight:600; }
+.org-item .count{ display:none; }
+.org-editor{ margin-top:10px; border-top:1px dashed var(--border); padding-top:10px; }
+.org-editor textarea{ width:100%; min-height:200px; background:#0b1023; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.org-actions{ display:flex; gap:8px; margin-top:8px; }
+
+/* resaltado dentro del editor */
+.org-hit{ background: rgba(168, 85, 247, .28); border-bottom: 1px dashed rgba(168, 85, 247, .8); border-radius:3px; padding:0 2px; }
+.org-hit.c0{ background: rgba(34,211,238,.25); border-bottom-color: rgba(34,211,238,.8); }
+.org-hit.c1{ background: rgba(16,185,129,.25); border-bottom-color: rgba(16,185,129,.8); }
+.org-hit.c2{ background: rgba(251,191,36,.25); border-bottom-color: rgba(251,191,36,.8); }
+.org-hit.c3{ background: rgba(244,114,182,.25); border-bottom-color: rgba(244,114,182,.8); }
+.org-hit.c4{ background: rgba(248,113,113,.25); border-bottom-color: rgba(248,113,113,.8); }
+.org-hit.c5{ background: rgba(147,197,253,.25); border-bottom-color: rgba(147,197,253,.8); }
+
+/* handle/asa para abrir/cerrar desde el rail */
+.org-handle{ display:none !important; }
+.org-handle:hover{ outline: 1px solid var(--accent); }
+
+/* Envoltura para poder posicionar el overlay */
+.editor-wrap { position: relative; }
+
+/* Asegura que el editor respete saltos y calce con el overlay */
+.editor{
+  white-space: pre-wrap;
+  line-height: 1.55;
+  padding: 12px 14px;
+  min-height: 260px;
+}
+
+/* Overlay posicionado por JS para calzar 1:1 con el editor */
+.org-overlay{
+  position: absolute;
+  pointer-events: none;          /* NO bloquear el teclado ni clics */
+  white-space: pre-wrap;         /* respeta saltos */
+  font: inherit;                 /* misma fuente */
+  line-height: inherit;          /* igual al editor */
+  color: transparent;            /* s�lo se ve el fondo de los hits */
+  z-index: 2;
+}
+
+/* Reusa tus colores por clase c0..c5 */
+.org-overlay .org-hit{
+  background: transparent;
+  border-bottom: 2px dotted rgba(168, 85, 247, .85);
+  border-radius: 0;
+}
+
+/* paleta consistente con lo que ya definiste */
+.org-overlay .c0{ background: transparent;  border-bottom-color: rgba(34,211,238,.9); }
+.org-overlay .c1{ background: transparent;  border-bottom-color: rgba(16,185,129,.9); }
+.org-overlay .c2{ background: transparent;  border-bottom-color: rgba(251,191,36,.9); }
+.org-overlay .c3{ background: transparent; border-bottom-color: rgba(244,114,182,.9); }
+.org-overlay .c4{ background: transparent; border-bottom-color: rgba(248,113,113,.9); }
+.org-overlay .c5{ background: transparent; border-bottom-color: rgba(147,197,253,.9); }
+
 @keyframes mic-pulse {
   0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7); }
   70% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }
@@ -481,4 +580,37 @@ input:checked + .slider:before {
   .list .tpl-row{ grid-template-columns: 1fr !important; }
   .list .tpl-actions{ justify-content: flex-end; }
 }
+
+/* ===== Ajustes de overlay de órganos (encima del editor) ===== */
+.org-overlay{
+  inset: 0;
+  z-index: 2;           /* por encima del editor, debajo del panel */
+  line-height: inherit; /* calza con el editor */
+  padding: 12px 14px;   /* acompasa el padding visual del editor */
+}
+
+
+/* Scroll del editor en el contenedor, no dentro del editor */
+.modal-card .editor{ overflow: visible !important; }
+.modal-card .editor-wrap{
+  position:relative;
+  margin-left:0;
+  transition: margin .22s ease;
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+
+
+
+
+
+
+
+
+.modal-card.show-orgs .org-panel.editing{ width: var(--org-width-edit); }
+
+.modal-card.show-orgs.edit-mode .editor-wrap{ margin-left: calc(var(--org-width-edit) + 20px); }
+
 

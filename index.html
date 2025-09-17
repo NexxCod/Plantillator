@@ -49,7 +49,7 @@
                             title="Recuperar último informe guardado">↺</button>
                     </div>
                     <textarea id="reportTxt" placeholder="Pega aquí el INFORME del residente…"></textarea>
-                    
+
                 </div>
             </div>
 
@@ -63,15 +63,15 @@
                 <span class="pill warn"> 🔄 Frases con cambios: <b id="mChanged">0</b></span>
                 <span class="pill good"> 📊 % cambio (frases): <b id="mPct">0%</b></span>
                 <div>
-                        <button id="micReportBtn" class="mic-btn"
-                            title="Dictar al informe (Web Speech). Atajo: Mantén presionado 'Alt'">
-                            🎤
-                            <span class="mic-dot" style="display:none;"></span>
-                        </button>
-                        <span class="mic-hint">Atajo: Mantén presionada la tecla <b>Alt</b> para hablar.</span>
-                    </div>
+                    <button id="micReportBtn" class="mic-btn"
+                        title="Dictar al informe (Web Speech). Atajo: Mantén presionado 'Alt'">
+                        🎤
+                        <span class="mic-dot" style="display:none;"></span>
+                    </button>
+                    <span class="mic-hint">Atajo: Mantén presionada la tecla <b>Alt</b> para hablar.</span>
+                </div>
             </div>
-            
+
         </section>
     </main>
 
@@ -89,6 +89,9 @@
                     🎤
                     <span class="mic-dot" style="display:none;"></span>
                 </button>
+                <button id="orgPanelToggle" class="icon-btn" title="Órganos y secciones">
+                    🧭 Órganos
+                </button>
                 <button id="edUseBase"
                     title="Fija el texto actual como la versión 'original' para la comparación visual">🔦 Limpiar
                     resaltados</button>
@@ -102,9 +105,33 @@
                 <button id="edSaveBack" title="Restaura el texto a cómo estaba cuando se abrió el editor">♻️ Restaurar
                     original</button>
             </div>
+            <div class="editor-wrap">
+                <div id="edEditor" class="editor" contenteditable="true" spellcheck="false"
+                    aria-label="Editor con control de cambios"></div>
+                <div id="orgOverlay" class="org-overlay" aria-hidden="true"></div>
+            </div>
+            <aside id="orgPanel" class="org-panel" aria-hidden="true">
+                <button id="orgHandle" class="org-handle" title="Abrir/cerrar órganos">🧭</button>
 
-            <div id="edEditor" class="editor" contenteditable="true" spellcheck="false"
-                aria-label="Editor con control de cambios"></div>
+                <div class="org-head">
+                    <strong>Órganos / Secciones</strong>
+                    <div class="spacer"></div>
+                    <button id="orgEditBtn" class="icon-btn" title="Editar diccionario">✏️</button>
+                </div>
+
+                <div id="orgList" class="org-list" role="listbox" aria-label="Órganos detectados"></div>
+
+                <div id="orgEditor" class="org-editor" hidden>
+                    <p class="small">Formato: <code>órgano: sin1, sin2, ...</code> (una línea por órgano)</p>
+                    <textarea id="orgTextarea" spellcheck="false" rows="10"></textarea>
+                    <div class="org-actions">
+                        <button id="orgSaveBtn" class="primary">Guardar</button>
+                        <button id="orgCancelBtn" class="icon-btn">Cancelar</button>
+                        <div class="spacer"></div>
+                        <button id="orgDownloadBtn" class="icon-btn" title="Descargar diccionario como .txt">Descargar</button>
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 
@@ -151,21 +178,22 @@
     </div>
 
     <div id="helpModal" class="modal" aria-hidden="true">
-  <div class="modal-backdrop" data-close="1"></div>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle" style="max-width:900px;">
-    <header class="modal-head">
-      <h2 id="helpTitle">Manual de uso</h2>
-      <button class="icon-btn" id="helpClose" title="Cerrar">✕</button>
-    </header>
+        <div class="modal-backdrop" data-close="1"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle" style="max-width:900px;">
+            <header class="modal-head">
+                <h2 id="helpTitle">Manual de uso</h2>
+                <button class="icon-btn" id="helpClose" title="Cerrar">✕</button>
+            </header>
 
-    <div class="modal-toolbar">
-      <div class="spacer"></div>
-      <button id="helpOpenPdf" class="primary" title="Abrir en pestaña para imprimir/guardar PDF">Abrir en pestaña</button>
+            <div class="modal-toolbar">
+                <div class="spacer"></div>
+                <button id="helpOpenPdf" class="primary" title="Abrir en pestaña para imprimir/guardar PDF">Abrir en
+                    pestaña</button>
+            </div>
+
+            <iframe id="helpFrame" src="" style="border:none; width:100%; height:70vh;"></iframe>
+        </div>
     </div>
-
-    <iframe id="helpFrame" src="" style="border:none; width:100%; height:70vh;"></iframe>
-  </div>
-</div>
 
 
     <footer>
@@ -176,7 +204,7 @@
             <span class="brand">Plantillador</span>
             <span class="year">© 2025</span>
             <span class="author">Marcelo Salinas Villagra</span>
-            <span class="version">· Versión 1.0</span>
+            <span class="version">· Versión 1.1</span>
         </div>
     </footer>
     <div id="toast" aria-live="polite" aria-atomic="true"></div>

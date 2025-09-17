@@ -332,10 +332,8 @@ export function buildEditor({
     edEditor.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        // Convención:
-        //  - Enter            -> nuevo párrafo (doble salto)
-        //  - Shift + Enter    -> salto de línea simple
-        insertPlainTextAtSelection(e.shiftKey ? "\n" : "\n\n");
+        // Ajuste: Enter = salto simple. Para nuevo párrafo, presionar Enter dos veces.
+        insertPlainTextAtSelection("\n");
         scheduleRender();
       }
     });
